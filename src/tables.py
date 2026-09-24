@@ -1,9 +1,9 @@
 """Analysis tables built from the clean session table (data/raw/sessions_clean.parquet).
 
-- lab_table():          exact replication of Google's GSP229 lab data (label will_buy_on_return_visit),
-                        plus our is_internal flag so the lab can be audited.
 - remarketing_table():  corrected D2 table: external first-visit non-buyers, label = purchase on a
                         later visit within 30 days, only first visits whose 30-day window fits in the data.
+
+The audit of Google's GSP229 lab runs on the lab's own table instead (sql/audit/a09-a13).
 """
 
 from __future__ import annotations
@@ -14,11 +14,6 @@ WINDOW_DAYS = 30
 TRAIN_END = pd.Timestamp("2017-04-30")   # lab: train on first visits 2016-08-01..2017-04-30
 TEST_START = pd.Timestamp("2017-05-01")  # lab: evaluate on first visits 2017-05-01..2017-06-30
 TEST_END = pd.Timestamp("2017-06-30")
-
-LAB_FEATURES = [
-    "latest_ecommerce_progress", "bounces", "time_on_site", "pageviews",
-    "source", "medium", "channel", "device_category", "country",
-]
 
 FIRST_VISIT_FEATURES = [
     # acquisition
@@ -42,37 +37,6 @@ def _split(dates: pd.Series) -> pd.Series:
         ).astype(str),
         index=dates.index,
     )
-
-
-def lab_table(sessions: pd.DataFrame) -> pd.DataFrame:
-    """Rows = first visits (totals.newVisits = 1), label computed over ALL sessions, as in the lab.
-
-    The lab groups by fullVisitorId + visitId, which merges midnight-split halves of one visit;
-    we do the same (sum the engagement totals, max the funnel step).
-    """
-    label = (
-        sessions.assign(return_purchase=sessions.purchased & ~sessions.is_new_visit)
-        .groupby("full_visitor_id")
-        .agg(will_buy_on_return_visit=("return_purchase", "max"), is_internal=("is_internal", "first"))
-        .astype({"will_buy_on_return_visit": int})
-    )
-    first = sessions[sessions.is_new_visit]
-    rows = first.groupby(["full_visitor_id", "visit_id"], as_index=False).agg(
-        session_date=("session_date", "min"),
-        latest_ecommerce_progress=("max_ecommerce_step", "max"),
-        bounces=("bounced", "max"),
-        time_on_site=("time_on_site", "sum"),
-        pageviews=("pageviews", "sum"),
-        source=("source", "first"),
-        medium=("medium", "first"),
-        channel=("channel", "first"),
-        device_category=("device_category", "first"),
-        country=("country", "first"),
-    )
-    rows["bounces"] = rows.bounces.astype(int)
-    rows = rows.merge(label, on="full_visitor_id", how="left")
-    rows["split"] = _split(rows.session_date)
-    return rows
 
 
 def remarketing_table(sessions: pd.DataFrame) -> pd.DataFrame:

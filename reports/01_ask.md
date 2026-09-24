@@ -34,7 +34,7 @@ The deliverable is a **budget recommendation**, not a model. Every analysis belo
 
 Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQuery ML* (GSP229), models this question with the label `will_buy_on_return_visit`, reaching 0.91 ROC-AUC. D2 audits that model and then builds a version ready for a real decision.
 
-5. **Audit:** How much of the lab model's performance depends on likely-internal visitors, who make up 53% of its training positives?
+5. **Audit:** How much of the lab model's performance depends on Google employees, who make up 61% of its training positives (verified on the lab's own table)?
 6. What first-visit signals (channel, device, geography, engagement, product interest) predict an external visitor's purchase on a *later* visit within 30 days?
 7. How well does the corrected model rank visitors compared with a simple rule (e.g. "viewed a product page") and with the lab model, measured by PR-AUC and top-decile lift instead of ROC-AUC?
 8. At what score cutoff does remarketing break even, and how many visitors and how much revenue does that audience cover?
@@ -102,3 +102,4 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 | 2026-09-24 | Primary stakeholder: Head of Marketing | Owns both decisions (D1 + D2) |
 | 2026-09-25 | **Correction:** D2 overlaps with Google's GSP229 lab (`will_buy_on_return_visit`), contrary to the original plan. The planned "end-of-session leakage" critique was also wrong, because the lab's features are available after the first visit | Verified against the lab text; stated from memory at first |
 | 2026-09-25 | Reposition D2 as **audit and fix the lab**: replicate it, show that 53% of its training positives are likely employees, test the effect on AUC (H4), rebuild external-only with a 30-day window and PR-AUC | Turns the overlap into a critique that can be checked, rather than a lookalike |
+| 2026-09-25 | **Correction:** the lab trains on `data-to-insights.ecommerce.web_analytics`, not the public sample. The audit was re-based on that table, where referrers are unredacted: **61%** of training positives are verified employees (the 53% was a public-sample estimate) | Checked against the lab's SQL and the table itself (reports/04_analyze.md, Part A) |

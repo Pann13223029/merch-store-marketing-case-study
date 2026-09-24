@@ -8,7 +8,6 @@ BigQuery: ga_sessions_* (903,653 sessions, nested hits)
    ▼
 data/raw/sessions_clean.parquet                 one row per session, 32 columns, 15/15 checks pass
    │
-   ├── src/tables.py:lab_table()          → data/processed/lab_table.parquet          (D2 audit)
    ├── src/tables.py:remarketing_table()  → data/processed/remarketing_table.parquet  (D2 model)
    └── src/journeys.py                    → data/processed/touches.parquet, journeys.parquet  (D1)
 ```
@@ -56,14 +55,9 @@ Journeys built from `channelGrouping` would already contain GA's last-non-direct
 
 ## Analysis tables
 
-### D2 audit: replication of Google's GSP229 lab (`lab_table`)
+### D2 audit: Google's GSP229 lab
 
-Rows are first visits (`newVisits = 1`), grouped by visitor + visit as the lab does. The label is computed over all data, with no time window, as the lab does. Our `is_internal` flag is added for the audit.
-
-| Split (lab dates) | First visits | Positives | Rate | …likely internal |
-|---|---:|---:|---:|---:|
-| Train (2016-08-01 – 2017-04-30) | 549,604 | 3,797 | 0.69% | 2,025 (53%) |
-| Eval (2017-05-01 – 2017-06-30) | 96,350 | 850 | 0.88% | 481 (57%) |
+The lab trains on a different table (`data-to-insights.ecommerce.web_analytics`), so its audit uses that table directly, with the lab's own SQL and BigQuery ML. See [reports/04_analyze.md](04_analyze.md), Part A. An earlier public-sample version of the lab's table was removed: it was an estimate on the wrong data, and it grouped rows slightly differently from the lab's SQL.
 
 ### D2 model: corrected remarketing table (`remarketing_table`)
 

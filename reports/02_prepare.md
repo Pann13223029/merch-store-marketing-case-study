@@ -26,7 +26,7 @@
 
 ### 1. About 41% of revenue comes from likely internal (Google employee) traffic
 
-Sessions labelled `Referral` with source `(direct)` and referral path `/` have their referring site redacted. **65.8% of them come from Google office cities** (Mountain View, Sunnyvale, San Francisco, New York…), and they convert at 7.61%, which is 10× the external rate. This matches the internal employee store link (`mall.googleplex.com`) that appears in the Kaggle version of this data.
+Sessions labelled `Referral` with source `(direct)` and referral path `/` have their referring site redacted. **65.8% of them come from Google office cities** (Mountain View, Sunnyvale, San Francisco, New York…), and they convert at 7.61%, which is 10× the external rate. This points to Google's internal employee store link. **Verified in Analyze (Part A):** Google's lab table, `data-to-insights.ecommerce.web_analytics`, keeps the referrer unredacted, and the same sessions there come from `mall.googleplex.com` (61,252) and `moma.corp.google.com` (418). Against that ground truth, the flag has **99.2% precision** and catches **98.2% of employee purchases**.
 
 Flagged at the **visitor level** (decision D-P1):
 
@@ -37,7 +37,7 @@ Flagged at the **visitor level** (decision D-P1):
 
 Flagging whole visitors (not just the entry session) also removes **3,023 Direct sessions** from employees who later returned by bookmark. Session-level flagging would have left those inflating the Direct channel.
 
-*Other redacted-referral paths* (`/offer/2145`, `/pagead/ads`, `/cm/CampaignMgmt`…; 1,697 sessions, $2.5k revenue) look like ad-preview tools and partner offers. They stay as `Referral` because they're too small to change any conclusion. This is noted as a limitation.
+*Other redacted-referral paths* (`/offer/2145`, `/pagead/ads`, `/cm/CampaignMgmt`…; 1,697 sessions, $2.5k revenue) turned out, in the lab's unredacted table, to be Google-internal too: the employee deals site `gdeals.googleplex.com`, ad-preview tools, and corp dashboards. They stay as `Referral` because they're too small to change any conclusion. All employee traffic the flag misses together is about 1.5% of the purchases treated as external (Analyze, Part A).
 
 ### 2. No tracking gaps across the year
 
@@ -101,7 +101,7 @@ The D2 population is first-visit non-buyers (about 665,700), and the target is a
 | ID | Decision | Why |
 |---|---|---|
 | D-P1 | Treat likely-internal traffic as a separate segment, **flagged at the visitor level**. Keep it in store-wide totals and exclude it from attribution (D1) and the remarketing model (D2) | Marketing can't buy employee visits. Leaving them in would make "Referral" look like the best channel. Visitor-level flagging stops their later direct visits from inflating Direct |
-| D-P1a | Internal rule = `channelGrouping = 'Referral' AND source = '(direct)' AND referralPath = '/'` | Covers 97.5% of redacted-referral sessions, with 65.8% from Google office cities. The remaining paths are too small to matter |
+| D-P1a | Internal rule = `channelGrouping = 'Referral' AND source = '(direct)' AND referralPath = '/'` | Covers 97.5% of redacted-referral sessions, with 65.8% from Google office cities. The remaining paths are too small to matter. Later verified against unredacted referrers: 99.2% precision, 98.2% of employee purchases caught (D-A1) |
 | D-P1b | Session key = `(fullVisitorId, visitId, visitStartTime)` | The 898 "duplicates" are midnight-split sessions, not errors |
 | D-P1c | `timeOnSite` NULL → 0; city not used; channel-level (not campaign-level) analysis | See completeness table |
 | D-P2 | Attribution credit is measured in **conversions first** (each purchase = 1). Revenue credit is shown second, with each order **capped at the 99th percentile**. Bulk orders are reported separately as a "corporate demand" finding | Conversions can't be skewed by a few $30k+ orders. Capping keeps revenue visible without letting outliers drive budget advice |
