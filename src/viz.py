@@ -219,3 +219,119 @@ def auc_dumbbell_chart(rows: list[dict], title: str, subtitle: str, note: str,
              fontsize=px(11), color=MUTED)
     footnote(fig, note)
     return fig
+
+
+def nice_ticks(vmax: float, max_ticks: int = 7) -> np.ndarray:
+    """Ticks from 0 on a 1-2-2.5-5 step so labels are round numbers."""
+    for step in [m * 10.0 ** e for e in range(-5, 3) for m in (1, 2, 2.5, 5)]:
+        if vmax / step <= max_ticks - 1:
+            return np.arange(0, vmax + 1e-12, step)
+    return np.linspace(0, vmax, max_ticks)
+
+
+def _pct_decimals(ticks: np.ndarray) -> int:
+    """Fewest decimals that keep every percentage tick label exact."""
+    for d in range(0, 4):
+        if np.allclose(np.round(ticks * 100, d), ticks * 100):
+            return d
+    return 3
+
+
+def rate_with_ci_chart(labels: list[str], rates: list[float], ci_low: list[float], ci_high: list[float],
+                       title: str, subtitle: str, note: str, decimals: int = 2,
+                       value_fmt=None, tick_fmt=None, highlight: set[int] | None = None):
+    """Horizontal bars (one series) with 95% CI whiskers.
+
+    Values are fractions shown as percentages unless value_fmt / tick_fmt are given (e.g. dollars).
+    Bars whose index is not in `highlight` (when given) are drawn in the de-emphasis grey.
+    """
+    apply_style()
+    n = len(labels)
+    fig, ax = figure(760, 96 + 48 * n + 130, plot_box=(150, 100, 90, 100))
+    xmax = max(ci_high) * 1.12
+    ax.set_xlim(0, xmax)
+    ax.set_ylim(n - 0.5, -0.5)
+    ax.set_yticks(range(n), labels)
+    ticks = nice_ticks(xmax)
+    if tick_fmt is None:
+        ax.set_xticks(ticks, [f"{t:.{_pct_decimals(ticks)}%}" for t in ticks])
+    else:
+        ax.set_xticks(ticks, [tick_fmt(t) for t in ticks])
+    ax.grid(axis="x", zorder=0)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["left"].set_color(AXIS)
+    for i, (r, lo, hi) in enumerate(zip(rates, ci_low, ci_high)):
+        color = SERIES_1 if highlight is None or i in highlight else DEEMPHASIS
+        rounded_hbar(ax, i, r, thickness_px=20, color=color)
+        ax.plot([lo, hi], [i, i], color=INK_2, lw=px(1.5), solid_capstyle="butt", zorder=4)
+        if value_fmt is None:
+            label_decimals = decimals + 1 if r < 0.001 else decimals   # 0.008% rather than 0.01%
+            text = f"{r:.{label_decimals}%}"
+        else:
+            text = value_fmt(r)
+        ax.text(hi + xmax * 0.012, i, text, va="center", ha="left", fontsize=px(12), color=INK, zorder=5)
+    header(fig, title, subtitle)
+    footnote(fig, note)
+    return fig
+
+
+def gains_chart(curves: dict[str, tuple[np.ndarray, np.ndarray]], colors: dict[str, str],
+                title: str, subtitle: str, note: str, x_max: float = 0.5, mark: float = 0.10,
+                key_at: tuple[float, float] = (0.14, 0.44)):
+    """Cumulative gains: share of future buyers captured vs share of visitors targeted.
+
+    curves: {label: (x_share_targeted, y_share_captured)}; a random-targeting diagonal is drawn in grey.
+    The curves converge on the right, so instead of end labels the values at `mark` are listed in a
+    small key placed in the empty area under the curves (`key_at`, data coordinates).
+    """
+    apply_style()
+    fig, ax = figure(760, 520, plot_box=(72, 132, 40, 92))
+    ax.set_xlim(0, x_max)
+    ax.set_ylim(0, 1)
+    xt = np.linspace(0, x_max, 6)
+    ax.set_xticks(xt, [f"{t:.0%}" for t in xt])
+    ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0], ["0%", "25%", "50%", "75%", "100%"])
+    ax.grid(axis="both", zorder=0)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color(AXIS)
+    ax.set_xlabel("First-time visitors targeted, highest scores first", fontsize=px(11), color=MUTED, labelpad=6)
+    ax.plot([0, x_max], [0, x_max], color=AXIS, lw=px(1.5), zorder=2)
+    ax.text(x_max * 0.985, x_max * 0.985 - 0.035, "Random targeting", ha="right", va="top",
+            fontsize=px(11), color=MUTED)
+    ax.axvline(mark, color=AXIS, lw=px(1), zorder=1)
+    values = {}
+    for label, (x, y) in curves.items():
+        keep = x <= x_max
+        ax.plot(x[keep], y[keep], color=colors[label], lw=px(2), solid_joinstyle="round",
+                solid_capstyle="round", zorder=3)
+        values[label] = float(np.interp(mark, x, y))
+        dot(ax, mark, values[label], colors[label], diameter_px=8)
+    # key: values at the mark, text in ink with a coloured dot beside it
+    kx, ky = key_at
+    ax.text(kx, ky, f"Buyers reached by targeting the top {mark:.0%}", ha="left", va="center",
+            fontsize=px(11.5), color=INK_2, fontweight="bold")
+    _, dy = _data_per_px(ax)
+    for i, (label, v) in enumerate(sorted(values.items(), key=lambda kv: -kv[1])):
+        yy = ky - (i + 1) * 22 * dy
+        dot(ax, kx + 0.004, yy, colors[label], diameter_px=8)
+        ax.text(kx + 0.012, yy, f"{v:.0%}  {label}", ha="left", va="center", fontsize=px(11.5), color=INK)
+    header(fig, title, subtitle)
+    # legend row under the subtitle (>= 2 series)
+    w, h = fig.get_size_inches() * PX_PER_IN
+    lx, ly = 24, 100
+    for label, color in colors.items():
+        fig.add_artist(plt.Line2D([(lx) / w, (lx + 16) / w], [1 - ly / h, 1 - ly / h], color=color,
+                                  lw=px(2), transform=fig.transFigure, solid_capstyle="round"))
+        t = fig.text((lx + 22) / w, 1 - ly / h, label, ha="left", va="center", fontsize=px(12), color=INK_2)
+        fig.canvas.draw()
+        lx += 22 + t.get_window_extent().width / (fig.dpi / PX_PER_IN) + 26
+    footnote(fig, note)
+    return fig
+
+
+def cumulative_gains(y: np.ndarray, s: np.ndarray, points: int = 400) -> tuple[np.ndarray, np.ndarray]:
+    order = np.argsort(-s, kind="stable")
+    captured = np.cumsum(y[order]) / y.sum()
+    share = np.arange(1, len(y) + 1) / len(y)
+    idx = np.unique(np.linspace(0, len(y) - 1, points).astype(int))
+    return np.r_[0, share[idx]], np.r_[0, captured[idx]]

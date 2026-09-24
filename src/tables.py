@@ -17,7 +17,7 @@ TEST_END = pd.Timestamp("2017-06-30")
 
 FIRST_VISIT_FEATURES = [
     # acquisition
-    "channel", "medium",
+    "channel", "medium", "source",
     # technology and geography
     "device_category", "operating_system", "browser", "sub_continent", "country",
     # engagement
@@ -55,6 +55,7 @@ def remarketing_table(sessions: pd.DataFrame) -> pd.DataFrame:
         session_date=("session_date", "min"),
         channel=("channel", "first"),
         medium=("medium", "first"),
+        source=("source", "first"),
         device_category=("device_category", "first"),
         operating_system=("operating_system", "first"),
         browser=("browser", "first"),
