@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Local data extracts (re-creatable from sql/ via BigQuery)
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+
+# Secrets / local config
+.env
+*.json.key
+
+# OS
+.DS_Store

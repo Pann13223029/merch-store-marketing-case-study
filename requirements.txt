@@ -1,0 +1,14 @@
+db-dtypes==1.7.1
+google-cloud-bigquery==3.45.2
+google-cloud-bigquery-storage==2.41.0
+ipykernel==7.3.0
+jupyterlab==4.6.4
+matplotlib==3.11.2
+numpy==2.5.3
+pandas==3.0.6
+pyarrow==25.0.1
+scikit-learn==1.9.1
+scipy==1.18.1
+seaborn==0.13.2
+shap==0.52.0
+statsmodels==0.15.0
