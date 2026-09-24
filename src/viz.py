@@ -68,6 +68,7 @@ def apply_style() -> None:
         "grid.linestyle": "-",
         "axes.spines.top": False,
         "axes.spines.right": False,
+        "text.parse_math": False,   # "$2.02" is money, not a math expression
     })
 
 
@@ -335,3 +336,106 @@ def cumulative_gains(y: np.ndarray, s: np.ndarray, points: int = 400) -> tuple[n
     share = np.arange(1, len(y) + 1) / len(y)
     idx = np.unique(np.linspace(0, len(y) - 1, points).astype(int))
     return np.r_[0, share[idx]], np.r_[0, captured[idx]]
+
+
+DIVERGING_POS = "#2a78d6"   # diverging pair (blue <-> red), reference palette
+DIVERGING_NEG = "#e34948"
+
+
+def diverging_ci_chart(labels: list[str], values: list[float], ci_low: list[float], ci_high: list[float],
+                       title: str, subtitle: str, note: str, pos_label: str, neg_label: str,
+                       value_fmt=lambda v: f"{v:+.1f}", tick_fmt=None):
+    """Horizontal diverging bars around zero with 95% CI whiskers (e.g. percentage-point gaps)."""
+    apply_style()
+    n = len(labels)
+    fig, ax = figure(760, 120 + 44 * n + 130, plot_box=(150, 124, 40, 100))
+    lim = max(abs(min(ci_low)), abs(max(ci_high))) * 1.25
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(n - 0.5, -0.5)
+    ax.set_yticks(range(n), labels)
+    ticks = nice_ticks(lim, max_ticks=4)
+    ticks = np.r_[-ticks[:0:-1], ticks]
+    tick_fmt = tick_fmt or value_fmt
+    ax.set_xticks(ticks, [tick_fmt(t).replace("-", "−") if t != 0 else "0" for t in ticks])
+    ax.grid(axis="x", zorder=0)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.axvline(0, color=AXIS, lw=px(1), zorder=2)
+    dx, dy = _data_per_px(ax)
+    for i, (v, lo, hi) in enumerate(zip(values, ci_low, ci_high)):
+        color = DIVERGING_POS if v >= 0 else DIVERGING_NEG
+        h = 20 * dy / 2
+        r = min(4 * dx, abs(v) / 2)
+        sgn = 1 if v >= 0 else -1
+        end = v
+        verts = [(0, i - h), (end - sgn * r, i - h), (end, i - h), (end, i - h + 4 * dy), (end, i + h - 4 * dy),
+                 (end, i + h), (end - sgn * r, i + h), (0, i + h), (0, i - h)]
+        codes = [MplPath.MOVETO, MplPath.LINETO, MplPath.CURVE3, MplPath.CURVE3, MplPath.LINETO,
+                 MplPath.CURVE3, MplPath.CURVE3, MplPath.LINETO, MplPath.CLOSEPOLY]
+        ax.add_patch(PathPatch(MplPath(verts, codes), facecolor=color, edgecolor="none", zorder=3))
+        ax.plot([lo, hi], [i, i], color=INK_2, lw=px(1.5), solid_capstyle="butt", zorder=4)
+        x_text, ha = (hi + lim * 0.03, "left") if v >= 0 else (lo - lim * 0.03, "right")
+        ax.text(x_text, i, value_fmt(v).replace("-", "−"), ha=ha, va="center", fontsize=px(12), color=INK, zorder=5)
+    header(fig, title, subtitle)
+    w, h = fig.get_size_inches() * PX_PER_IN
+    lx, ly = 24, 100
+    for color, label in [(DIVERGING_POS, pos_label), (DIVERGING_NEG, neg_label)]:
+        fig.add_artist(plt.Rectangle(((lx) / w, 1 - (ly + 6) / h), 12 / w, 12 / h, color=color,
+                                     transform=fig.transFigure))
+        t = fig.text((lx + 18) / w, 1 - ly / h, label, ha="left", va="center", fontsize=px(12), color=INK_2)
+        fig.canvas.draw()
+        lx += 18 + t.get_window_extent().width / (fig.dpi / PX_PER_IN) + 26
+    footnote(fig, note)
+    return fig
+
+
+def value_strip_chart(groups: list[str], points: dict[str, dict[str, float]], highlight: dict[str, str],
+                      title: str, subtitle: str, note: str, value_fmt=lambda v: f"${v:.2f}"):
+    """One row per group; a dot per model on a shared value axis.
+
+    points: {group: {model_label: value}}. Models named in `highlight` ({label: colour}) are drawn in that
+    colour and labelled; all other models are grey context dots.
+    """
+    apply_style()
+    n = len(groups)
+    fig, ax = figure(760, 130 + 86 * n + 136, plot_box=(130, 130, 40, 110))
+    vmax = max(v for g in points.values() for v in g.values()) * 1.12
+    ax.set_xlim(0, vmax)
+    ax.set_ylim(n - 0.5, -0.6)
+    ax.set_yticks(range(n), groups)
+    ticks = nice_ticks(vmax)
+    ax.set_xticks(ticks, [value_fmt(t) for t in ticks])
+    ax.grid(axis="x", zorder=0)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color(AXIS)
+    for i, g in enumerate(groups):
+        vals = points[g]
+        grey = [v for k, v in vals.items() if k not in highlight]
+        if grey:
+            ax.plot([min(grey), max(grey)], [i, i], color=GRID, lw=px(6), solid_capstyle="round", zorder=2)
+            for v in grey:
+                dot(ax, v, i, AXIS, diameter_px=9)
+        shown = sorted((vals[l], l, c) for l, c in highlight.items() if l in vals)
+        close = len(shown) == 2 and abs(shown[1][0] - shown[0][0]) < vmax * 0.10
+        for k, (v, label, color) in enumerate(shown):
+            dot(ax, v, i, color, diameter_px=11)
+            if close:   # push the two labels apart: lower value to the left, higher to the right
+                x, ha = (v - vmax * 0.01, "right") if k == 0 else (v + vmax * 0.01, "left")
+            else:
+                x, ha = v, "center"
+            ax.text(x, i - 0.30, value_fmt(v), ha=ha, va="bottom", fontsize=px(11.5), color=INK)
+        if grey:
+            ax.text((min(grey) + max(grey)) / 2, i + 0.26, f"other models {value_fmt(min(grey))}–{value_fmt(max(grey))}",
+                    ha="center", va="top", fontsize=px(10.5), color=MUTED)
+    header(fig, title, subtitle)
+    w, h = fig.get_size_inches() * PX_PER_IN
+    lx, ly = 24, 100
+    entries = list(highlight.items()) + [("Other models", AXIS)]
+    for label, color in entries:
+        fig.add_artist(plt.Line2D([(lx + 5) / w], [1 - ly / h], marker="o", ms=px(10), mfc=color, mec=SURFACE,
+                                  mew=0, transform=fig.transFigure))
+        t = fig.text((lx + 16) / w, 1 - ly / h, label, ha="left", va="center", fontsize=px(12), color=INK_2)
+        fig.canvas.draw()
+        lx += 16 + t.get_window_extent().width / (fig.dpi / PX_PER_IN) + 26
+    footnote(fig, note)
+    return fig

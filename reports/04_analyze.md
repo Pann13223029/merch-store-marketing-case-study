@@ -2,7 +2,7 @@
 
 - **Part A: Audit of Google's lab model for D2**
 - **Part B: The corrected remarketing model and break-even audience (D2)**
-- Part C: Multi-touch attribution and budget shifts (D1), to come
+- **Part C: Which channels deserve the credit: attribution and paid-click value (D1)**
 
 ---
 
@@ -305,3 +305,166 @@ Revenue per visitor is **measured**: what each score band actually spent in the 
 | D-B2 | Break-even reported as the **maximum affordable cost per visitor** by score band. Central 10% lift and 50% margin; sensitivity 5–20% and 30–70% | User's decision: no invented cost figure. The Head of Marketing compares with real costs |
 | D-B3 | Tuning grid extended until tree-model optima were interior (28 configurations) | A best result at a grid's edge may not be the true optimum |
 | D-B4 | H1 and H3 tested on training months only | Keeps the test months untouched for the single final evaluation |
+
+---
+
+## Part C — Which channels deserve the credit? (D1)
+
+Notebook: [notebooks/05_analyze_attribution.ipynb](../notebooks/05_analyze_attribution.ipynb) · Code: [`src/attribution.py`](../src/attribution.py)
+
+**Question:** how should the Head of Marketing shift channel budget?
+**Data:** 580,775 journeys of external visitors, 5,074 purchases (journeys ending Aug 31, 2016 – Jul 1, 2017).
+**Method:**
+- **What we compare against:** the store's GA channel report, which uses **last non-direct click** and relabels direct returns with the previous campaign.
+- **What we compare it with:** five models run on the channels visitors **actually arrived through** (D-PR1).
+- **What counts:** **purchases first**, capped revenue second (D-P2).
+
+### Summary
+
+| Finding | Evidence |
+|---|---|
+| **GA's report over-credits Organic Search by about 15 points** | 53.6% of purchases vs 38.2% data-driven (−15.4 pts, 95% CI −16.3 to −14.6). Every multi-touch model gives 30–45%, and the conservative relabel gives 45% |
+| **Returning visitors (Direct) are the largest source of purchases, and GA's report hides it** | Data-driven: 49% of purchases, 61% of revenue. GA's report: 32.5% / 46.8% |
+| **H2 holds against true last click but is reversed against GA's report** | vs last touch: Organic +8.3, Paid Search +1.2, Display +0.4, Social +0.7 pts (all CIs above 0). vs GA's report: Organic −15.4, Paid Search −0.7, Display −0.5 |
+| A first-order Markov chain over-credits high-traffic channels; the **third-order chain predicts later journeys best** | Held-out log-likelihood −2.176 → −2.130; Social's credit 164 → 89 purchases (it started journeys with 59) |
+| **Paid Search's value per click is stable** | $1.56–$2.46 across seven models, so it breaks even below about **$0.80–$1.20 per click** at a 50% margin |
+| **Display's value can't be determined from this data** | $2.85–$9.08 per click. 91% of its GA-credited revenue and 8 of its 10 bulk orders come from 1,118 visits flagged as return visits (`isTrueDirect`) |
+| **YouTube brings visits, not buyers** | 57k sessions in Nov 2016 with 0 purchases; about 212k sessions over the year, 11 purchases |
+| **Bulk orders are concentrated** | 51 orders above $1,606 make up 29.2% of external revenue: Display 10 ($110.7k), Direct 26 ($98.2k), Organic Search 14 ($37.3k) |
+
+### 1. Channel profile (external traffic, GA's labels)
+
+| Channel | Sessions | Share of sessions | Conversion rate | Share of purchases | Revenue (capped) |
+|---|---:|---:|---:|---:|---:|
+| Organic Search | 377,932 | 45.7% | 0.88% | 54.1% | $331,766 |
+| Direct | 140,003 | 16.9% | 1.40% | 32.0% | $378,718 |
+| Paid Search | 25,070 | 3.0% | 1.81% | 7.4% | $46,236 |
+| Referral | 36,301 | 4.4% | 0.49% | 2.9% | $33,290 |
+| Display | 5,552 | 0.7% | 2.31% | 2.1% | $32,993 (raw $127,661) |
+| Social | 225,788 | 27.3% | 0.04% | 1.4% | $7,530 |
+| Affiliates | 16,365 | 2.0% | 0.05% | 0.1% | $654 |
+
+**The Oct–Nov 2016 traffic spike flagged in Prepare was YouTube.** `youtube.com` sent 41,394 and 56,582 sessions in those months with **no purchases**.
+
+### 2. Journeys and channel roles
+
+42.5% of purchasing journeys have more than one visit. In those journeys:
+
+| Channel | Starts | Closes | Assists | Starts ÷ closes |
+|---|---:|---:|---:|---:|
+| Direct | 1,030 | 1,890 | 953 | 0.54 |
+| Organic Search | 881 | 129 | 81 | **6.83** |
+| Paid Search | 164 | 77 | 62 | 2.13 |
+| Display | 34 | 12 | 22 | 2.83 |
+| Referral | 29 | 39 | 34 | 0.74 |
+| Social | 18 | 11 | 8 | 1.64 |
+
+Search and ads **start** journeys, and people come back **on their own** (Direct) to buy.
+
+### 3. Choosing the Markov model
+
+| Order | States | Held-out log-likelihood per journey | Social credit | Affiliates credit | Paid Search credit |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 11 | −2.176 | 164 | 29 | 283 |
+| 2 | 73 | −2.135 | 117 | 23 | 333 |
+| **3** | 346 | **−2.130** | 89 | 16 | 342 |
+
+The chain is fit on journeys ending before March 2017 and scored on the rest. A first-order chain forgets where a returning visitor came from, so it applies the average direct visitor's high buying rate to YouTube and affiliate visitors. More memory corrects most of this.
+
+### 4. Credit under six models (share of 5,074 purchases, 95% bootstrap CI)
+
+| Channel | GA report | Last touch | First touch | Linear | Position-based | **Markov (3rd order)** |
+|---|---|---|---|---|---|---|
+| Organic Search | **53.6%** (52.2–55.1) | 29.9% | 44.7% | 35.7% | 36.6% | **38.2%** (37.2–39.2) |
+| Direct | **32.5%** (31.1–33.8) | 61.1% | 44.1% | 54.3% | 53.3% | **49.4%** (48.4–50.4) |
+| Paid Search | 7.4% (6.7–8.2) | 5.6% | 7.3% | 6.3% | 6.4% | 6.7% (6.2–7.4) |
+| Referral | 3.0% | 1.4% | 1.2% | 1.3% | 1.3% | 2.2% |
+| Display | 1.9% (1.6–2.3) | 1.0% | 1.4% | 1.2% | 1.2% | 1.4% (1.1–1.7) |
+| Social | 1.5% | 1.0% | 1.2% | 1.1% | 1.1% | 1.8% |
+| Affiliates | 0.1% | 0.0% | 0.1% | 0.0% | 0.0% | 0.3% |
+
+### 5. H2: does last-click reporting under-credit the channels that start journeys?
+
+![Credit gap](figures/d1_credit_gap.png)
+
+| Channel (starts ÷ closes) | Markov − last touch (pts, 95% CI) | Markov − GA report (pts, 95% CI) |
+|---|---|---|
+| Organic Search (6.8) | **+8.3** (+7.6 to +8.9) | **−15.4** (−16.3 to −14.6) |
+| Display (2.8) | +0.4 (+0.2 to +0.6) | −0.5 (−0.8 to −0.3) |
+| Paid Search (2.1) | +1.2 (+0.8 to +1.6) | −0.7 (−1.1 to −0.4) |
+| Social (1.6) | +0.7 (+0.6 to +0.9) | +0.2 (+0.1 to +0.4) |
+| Direct (0.5) | −11.6 (−12.3 to −11.0) | **+16.9** (+16.0 to +17.8) |
+
+**The answer depends on which "last click" is meant.**
+- **True last click does under-credit the starters, so H2 is supported there.**
+- **GA's report is not true last click.** Its direct-relabelling hands the credit of later return visits back to the first campaign, so it **over-credits** Organic Search, Paid Search, and Display. The channel GA truly under-credits is **Direct**: people returning on their own.
+
+### 6. Sensitivity
+
+| Channel | GA report (purchases) | Markov (purchases) | Markov, conservative relabel | GA report (capped revenue) | Markov (capped revenue) |
+|---|---:|---:|---:|---:|---:|
+| Organic Search | 53.6% | 38.2% | 45.4% | 37.8% | 27.0% |
+| Direct | 32.5% | 49.4% | 40.6% | 46.8% | 61.5% |
+| Paid Search | 7.4% | 6.7% | 7.6% | 5.7% | 5.2% |
+| Display | 1.9% | 1.4% | 1.9% | 4.4% | 1.6% |
+| Referral | 3.0% | 2.2% | 2.8% | 4.5% | 2.5% |
+| Social | 1.5% | 1.8% | 1.4% | 0.9% | 1.7% |
+
+- **Organic Search over-credit is robust:** it survives the conservative relabel (45% vs 54%).
+- **Paid Search and Display are not:** under the conservative relabel they land at GA's level. So "GA over-credits the paid channels" depends on how the `isTrueDirect` return visits are read.
+- **Revenue credit tilts further toward Direct**, because the largest orders come from people returning on their own.
+
+### 7. What is one paid click worth?
+
+Revenue credited per **visit the channel actually brought** (for paid channels, per ad click). The denominator is the same for every model.
+
+![Value per click](figures/d1_value_per_click.png)
+
+| Model | Paid Search, $/click | Display, $/click | Affiliates, $/click |
+|---|---:|---:|---:|
+| GA report | 2.21 | **9.08** | 0.01 |
+| Last touch | 1.56 | 2.89 | 0.00 |
+| First touch | 2.08 | 2.96 | 0.01 |
+| Linear | 1.78 | 2.85 | 0.00 |
+| Position-based | 1.81 | 2.90 | 0.00 |
+| Markov (3rd order) | 2.02 | 3.31 | 0.28 |
+| Markov, conservative relabel | 2.46 | 8.15 | 0.07 |
+
+At a 50% gross margin, the break-even cost per click is half of these values.
+- **Paid Search:** about $0.80–$1.20 per click, consistent across models.
+- **Display:** anywhere from about $1.40 to $4.50.
+
+**Why Display's value swings:**
+
+| Display visits (GA label) | Visits | Purchases | Revenue | Bulk orders |
+|---|---:|---:|---:|---:|
+| Fresh ad clicks | 3,283 | 50 | $10,717 | 2 |
+| Flagged `isTrueDirect`, carrying Display's campaign tag | 1,118 | 47 | $113,765 | 8 |
+
+GA sets `isTrueDirect` both for real direct returns and for consecutive visits with identical campaign details, and the data can't separate them. Display's value, and whether it's a corporate (bulk-order) channel, rests on those 1,118 visits.
+
+**If paid budget followed credited revenue**, Display's share would be 43% under GA's report, 21–26% under the arrival-based models, and 38% under the conservative relabel. Paid Search takes the rest (Affiliates stays at 0–6%). The *direction* (less Display, more Paid Search) is consistent, but its *size* depends on the unresolved labelling, so it isn't a safe basis for moving money yet.
+
+### What this means for D1 (carried to Act)
+
+1. **Correct the Organic Search story.** GA's report inflates it by about 15 points of purchases that come from people returning on their own. Organic Search is a strong *starter*, but its reported share includes returns it didn't cause.
+2. **Treat returning visitors as a channel.** Direct returns produce half of purchases and 61% of revenue, so retention (email, reminders to past buyers) deserves budget attention.
+3. **Keep Paid Search and bid against value.** A click is worth about $1.60–$2.50, so it breaks even below roughly $0.80–$1.20 per click at a 50% margin.
+4. **Hold Display budget until a holdout test.** Its value per click varies 3× with how 1,118 tagged return visits are read, and those visits hold 8 of its 10 bulk orders.
+5. **Question paid spend on Affiliates and on YouTube promotion.** Neither brings meaningful purchases under any model.
+
+### Limitations
+
+- **None of these models measures cause and effect.** All of them, the Markov chain included, describe observed paths. Only experiments (holdouts, geo tests) measure what a channel actually causes.
+- **Cookie-based identity** splits journeys across devices and browsers, undercounting multi-visit paths.
+- **There is no cost data**, so budget advice is stated as the maximum affordable cost per click.
+- **The data is from 2016–17 Universal Analytics.** GA4's own default attribution is data-driven, but the `isTrueDirect` issue has a GA4 analogue: direct traffic is still attributed to earlier campaigns in some reports.
+
+### Decision log
+
+| ID | Decision | Why |
+|---|---|---|
+| D-C1 | Markov order 3, chosen by held-out log-likelihood | Fits later journeys best and fixes most of the first-order chain's over-crediting of high-traffic channels |
+| D-C2 | Markov revenue credit via a value-weighted removal effect (each step into a purchase carries the average order value that follows it). An intermediate path-level allocation was tried and rejected | Keeps order values where they occur. The path-level split let Direct take about 90% of every journey it appeared in, giving Paid Search less credit than last touch |
+| D-C3 | Value per click divides by **actual arrival visits** for every model | The store pays for ad clicks. GA's session counts include relabelled return visits that cost nothing |
+| D-C4 | Recommend no Display budget change without a holdout test | Its value depends on an ambiguity the data can't resolve |
