@@ -1,8 +1,9 @@
 """BigQuery helpers: run SQL files with a cost guard and a local parquet cache.
 
 The BigQuery sandbox allows 1 TB of query scanning per month. Every query is
-dry-run first so we see (and cap) the bytes it will scan before it runs, and
-results are cached to data/raw/ so re-running a notebook costs nothing.
+dry-run first so we see (and cap) the bytes it will scan before it runs, every job
+carries the same cap as maximum_bytes_billed so BigQuery itself refuses to bill more,
+and results are cached to data/raw/ so re-running a notebook costs nothing.
 """
 
 from __future__ import annotations
@@ -27,11 +28,19 @@ def client(project: str | None = None) -> bigquery.Client:
 
 
 def load_sql(name_or_query: str) -> str:
-    """Accept either a file name in sql/ (e.g. '01_profile.sql') or raw SQL text."""
-    path = SQL_DIR / name_or_query
-    if name_or_query.endswith(".sql") and path.exists():
-        return path.read_text()
+    """Accept either a file name in sql/ (e.g. 'audit/a03_lab_table_vs_public.sql') or raw SQL text.
+
+    A name ending in '.sql' is always read as a file, so a missing or misspelled one raises
+    FileNotFoundError instead of being sent to BigQuery as SQL text.
+    """
+    if name_or_query.endswith(".sql"):
+        return (SQL_DIR / name_or_query).read_text()
     return name_or_query
+
+
+def capped_job_config(max_gb: float) -> bigquery.QueryJobConfig:
+    """Job config that makes BigQuery fail the job, at no charge, rather than bill more than max_gb."""
+    return bigquery.QueryJobConfig(maximum_bytes_billed=int(max_gb * 1e9))
 
 
 def to_portable_dtypes(df: pd.DataFrame) -> pd.DataFrame:
@@ -67,8 +76,8 @@ def query(
     if cache_path and cache_path.exists() and not refresh:
         return pd.read_parquet(cache_path)
 
-    bq = bq or client()
     sql = load_sql(name_or_query)
+    bq = bq or client()
     gb = dry_run_gb(sql, bq)
     if gb > max_gb:
         raise RuntimeError(f"Query would scan {gb:.2f} GB (limit {max_gb} GB). Pass max_gb= to override.")
@@ -76,8 +85,21 @@ def query(
 
     # REST download: the gRPC Storage Read API gets dropped on this network, and our
     # result sets are small aggregates, so its speed-up isn't needed.
-    df = to_portable_dtypes(bq.query(sql).to_dataframe(create_bqstorage_client=False))
+    job = bq.query(sql, job_config=capped_job_config(max_gb))
+    df = to_portable_dtypes(job.to_dataframe(create_bqstorage_client=False))
     if cache_path:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         df.to_parquet(cache_path, index=False)
     return df
+
+
+def execute(name_or_query: str, max_gb: float = DEFAULT_MAX_GB, bq: bigquery.Client | None = None) -> None:
+    """Run SQL that returns no rows, such as the BigQuery ML CREATE MODEL scripts, under the same cap as query().
+
+    These statements are not dry-run: a dry run doesn't reliably estimate what CREATE MODEL will bill
+    (BigQuery ML works out the bytes for some model types only during training). The cap is applied
+    as maximum_bytes_billed alone, so BigQuery fails the job, at no charge, if it would bill more than max_gb.
+    """
+    sql = load_sql(name_or_query)
+    bq = bq or client()
+    bq.query(sql, job_config=capped_job_config(max_gb)).result()

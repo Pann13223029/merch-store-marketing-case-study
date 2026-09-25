@@ -121,7 +121,7 @@ Employee contamination doesn't just inflate the published score; it **makes the 
 - **Ground truth depends on referrers.** Employees who never arrived through an internal referrer (for example, those who typed the URL) count as external in both tables, so the external-only results still contain some employees. The true inflation is probably *larger* than 0.047.
 - **Google doesn't document how either table was produced.** The comparison shows *what* differs, not *why*.
 - **The lab's label has no fixed time window**, so evaluation visitors from late June 2017 had less time to return. This affects all models equally, so the comparisons still hold.
-- BigQuery ML models live in the sandbox project (`merch-store-capstone.lab_audit`). The notebook reads cached results unless `RUN_BQML = True`.
+- BigQuery ML models live in the sandbox project (`merch-store-capstone.lab_audit`). The notebook reads their committed results in `data/raw/` unless `RUN_BQML = True`.
 
 ### Decision log
 

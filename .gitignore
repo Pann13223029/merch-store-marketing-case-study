@@ -8,6 +8,10 @@ __pycache__/
 data/raw/*
 data/processed/*
 !data/**/.gitkeep
+# ...except small results that need BigQuery ML models (RUN_BQML) or ~35 min of tuning (RUN_TUNING) to recreate
+!data/raw/a11_bqml_evaluate.parquet
+!data/raw/a13_bqml_predictions.parquet
+!data/processed/tuning_results.json
 
 # Secrets / local config
 .env

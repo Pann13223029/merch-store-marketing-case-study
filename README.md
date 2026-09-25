@@ -87,6 +87,8 @@ Every one of these is recorded in the decision logs, because catching them is pa
 
 ## Reproduce it
 
+**Prerequisites:** Python 3.12, the [gcloud CLI](https://cloud.google.com/sdk/docs/install), and a Google Cloud project with the BigQuery API enabled (a free [BigQuery sandbox](https://cloud.google.com/bigquery/docs/sandbox) project is enough).
+
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 gcloud auth application-default login                      # Google account with a free BigQuery sandbox project
@@ -96,8 +98,9 @@ gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 
 Then run `notebooks/01` → `05` in order.
 - **Downloads:** notebook 02's first run downloads the clean session table (0.81 GB scanned, about 8 minutes), and later runs read the local cache in `data/` (gitignored).
-- **Pre-computed results:** notebooks 03 and 04 read cached BigQuery ML and tuning results unless you set `RUN_BQML = True` or `RUN_TUNING = True`.
-- **Cost:** every query stays well inside BigQuery's free tier. The query helper ([src/bq.py](src/bq.py)) dry-runs each query first and refuses anything scanning more than 20 GB. The BigQuery ML model-creation statements run directly and scan under 0.3 GB each.
+- **Committed results:** the BigQuery ML results (`data/raw/a11_*`, `a13_*`) and the tuning results (`data/processed/tuning_results.json`) are in the repository, so `RUN_BQML` (notebook 03) and `RUN_TUNING` (notebook 04) stay `False` by default. Set one to `True` to recompute: about 7 minutes for the BigQuery ML models, about 35 minutes for the tuning.
+- **Run time** with `data/` filled: 01 and 02 under a minute each, 03 about 6 minutes (almost all of it paired bootstraps), 04 about 6–12 minutes, 05 about a minute. A busy machine can take twice as long.
+- **Cost:** every query stays well inside BigQuery's free tier. The query helper ([src/bq.py](src/bq.py)) dry-runs each query first, refuses anything scanning more than 20 GB, and caps each job's billed bytes at the same 20 GB. The BigQuery ML model-creation statements skip the dry run, which doesn't reliably estimate their cost, and run under that cap alone; they scan under 0.3 GB each.
 
 ```
 ├── reports/     executive summary, phase write-ups (01_ask … 04_analyze), figures/
@@ -106,7 +109,7 @@ Then run `notebooks/01` → `05` in order.
 ├── src/         bq · validate · tables · journeys · lab_audit · modeling · breakeven · attribution · viz · dashboard
 ├── dashboard/   Looker Studio build guide and its CSV data (python -m src.dashboard)
 ├── kaggle/      self-contained Kaggle notebook
-└── data/        local cache, rebuilt from sql/ (not committed)
+└── data/        local cache, rebuilt from sql/ (gitignored, except the BigQuery ML and tuning results)
 ```
 
 ## Limitations and ethics

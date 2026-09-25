@@ -94,7 +94,7 @@ The D2 population is first-visit non-buyers (about 665,700), and the target is a
 
 - Google publishes the data as a BigQuery public dataset for learning and demonstration. We query it in place, and only aggregates and derived extracts are stored locally.
 - It contains no PII. Visitor IDs are hashed and cities are partly redacted by Google.
-- Local extracts are gitignored and never committed. Credentials live in the gcloud config, outside the repo.
+- Local extracts are gitignored, except three small results that are slow to recreate: the BigQuery ML evaluation and predictions (`data/raw/a11_*`, `a13_*`) and the tuning results (`data/processed/tuning_results.json`). The predictions keep Google's hashed visitor and session IDs, the same ones anyone can query in the public tables. Credentials live in the gcloud config, outside the repo.
 
 ## Decision log
 
