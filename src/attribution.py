@@ -230,3 +230,30 @@ def starter_closer(journeys: pd.DataFrame, path_col: str = "arrival_path") -> pd
     t = pd.DataFrame(rows, columns=["role", "channel"]).value_counts().unstack("role").fillna(0).astype(int)
     t["start_to_close_ratio"] = t["starts"] / t["closes"].where(t["closes"] > 0)
     return t.sort_values("starts", ascending=False)
+
+
+def credit_vs_presence(att: Attribution, model: str = "markov", measure: str = "conversions") -> pd.DataFrame:
+    """Each channel's credit against the converting journeys it actually appears in.
+
+    A channel can't earn more purchases than the purchasing journeys that contain it, nor more revenue
+    than those journeys brought in. The path-based models (first and last touch, linear, position-based)
+    stay within that bound by construction. GA's last click can exceed it, because GA may label the
+    purchase session with a campaign from outside the journey, and so can the Markov chain, which
+    recombines observed steps into paths nobody took (the third-order chain credits Affiliates with
+    16.2 purchases from 4 purchasing journeys).
+
+    Returns one row per channel: credited (credit under `model`), presence (converting journeys that
+    contain the channel, or their capped revenue when measure="revenue"), and exceeds_presence.
+    """
+    if measure not in ("conversions", "revenue"):
+        raise ValueError(f"measure must be 'conversions' or 'revenue', not {measure!r}")
+    # A channel appears in a journey exactly when linear attribution gives it credit there.
+    present = att.credit["linear"] > 0
+    weight = att.revenue[att.conv_rows] if measure == "revenue" else np.ones(len(att.conv_rows))
+    presence = (present * weight[:, None]).sum(axis=0)
+    credited = att.credit_table()[(model, measure)].to_numpy()
+    return pd.DataFrame({
+        "credited": credited,
+        "presence": presence,
+        "exceeds_presence": (credited > presence) & ~np.isclose(credited, presence),   # beyond float rounding
+    }, index=att.channels)

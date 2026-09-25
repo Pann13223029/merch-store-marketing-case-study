@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+# strict: unknown markers and config keys are errors, and an xfail that starts passing fails the run
+strict = true
+markers = [
+    "real_data: needs the local cache data/processed/journeys.parquet (skipped when it is missing)",
+]
