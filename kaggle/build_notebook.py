@@ -22,7 +22,7 @@ def module_source(name: str) -> str:
 
 md("""# Where should the Google Merchandise Store spend its next marketing dollar?
 
-A marketing-analytics case study on the **Google Analytics 360 export of the Google Merchandise Store** (BigQuery public dataset, Aug 2016 – Aug 2017). It's a condensed, runnable version of the full project: **[GitHub repository link]** (write-ups, 5 notebooks, SQL, charts, executive summary).
+A marketing-analytics case study on the **Google Analytics 360 export of the Google Merchandise Store** (BigQuery public dataset, Aug 2016 – Aug 2017). It's a condensed, runnable version of the full project: **[github.com/Pann13223029/merch-store-marketing-case-study](https://github.com/Pann13223029/merch-store-marketing-case-study)** (write-ups, 5 notebooks, SQL, charts, executive summary).
 
 **The stakeholder:** the store's Head of Marketing.
 - **D1:** which channels actually produce buyers?
