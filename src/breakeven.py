@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 BANDS = [(0.00, 0.01), (0.01, 0.02), (0.02, 0.05), (0.05, 0.10), (0.10, 0.20), (0.20, 0.50), (0.50, 1.00)]
+TARGETS = (0.01, 0.05, 0.10, 0.20)   # retarget the top X% of scored first visits
 CENTRAL = {"lift": 0.10, "margin": 0.50}
 LIFTS = (0.05, 0.08, 0.10, 0.15, 0.20)
 MARGINS = (0.30, 0.50, 0.70)
@@ -57,6 +58,45 @@ def value_by_band(y: np.ndarray, revenue: np.ndarray, score: np.ndarray, bands=B
 def max_affordable_cost(revenue_per_visitor, lift: float = CENTRAL["lift"], margin: float = CENTRAL["margin"]):
     """Highest cost per remarketed visitor (30 days) at which the band still breaks even."""
     return np.asarray(revenue_per_visitor) * lift * margin
+
+
+def breakeven_lift(cost_per_visitor, revenue_per_visitor, margin: float = CENTRAL["margin"]):
+    """Smallest incremental lift at which remarketing a visitor pays for its cost (the inverse of max_affordable_cost)."""
+    return np.asarray(cost_per_visitor) / (np.asarray(revenue_per_visitor) * margin)
+
+
+def value_of_targets(y: np.ndarray, revenue: np.ndarray, score: np.ndarray, months: float, targets=TARGETS,
+                     zero_lift: np.ndarray | None = None, n_boot: int = 2000, seed: int = 42) -> pd.DataFrame:
+    """Extra gross profit per month, before ad cost, from remarketing the top share of visitors by score.
+
+    Value = capped 30-day revenue of the visitors in the target x lift x margin / months, in the central case
+    (`gross_profit_per_month`), with a bootstrap 95% CI over the visitors in the target (revenue noise only) and
+    the range across the LIFTS x MARGINS grid (`range_low`, `range_high`). Visitors in `zero_lift` (e.g. Google
+    employees, whom an ad can't turn into customers) add no revenue but still count as remarketed visitors.
+    """
+    rng = np.random.default_rng(seed)
+    order = np.argsort(-score, kind="stable")
+    rev = np.minimum(revenue, REVENUE_CAP_USD)
+    if zero_lift is not None:
+        rev = np.where(zero_lift, 0.0, rev)
+    central = CENTRAL["lift"] * CENTRAL["margin"]
+    rows = []
+    for frac in targets:
+        idx = order[:int(round(frac * len(score)))]
+        r = rev[idx]
+        boots = np.array([r[rng.integers(0, len(r), len(r))].sum() for _ in range(n_boot)])
+        rows.append({
+            "target": f"top {frac:.0%}",
+            "visitors_per_month": len(idx) / months,
+            "share_of_later_buyers": y[idx].sum() / y.sum(),
+            "revenue_per_visitor": r.mean(),
+            "gross_profit_per_month": r.sum() * central / months,
+            "ci_low": np.percentile(boots, 2.5) * central / months,
+            "ci_high": np.percentile(boots, 97.5) * central / months,
+            "range_low": r.sum() * min(LIFTS) * min(MARGINS) / months,
+            "range_high": r.sum() * max(LIFTS) * max(MARGINS) / months,
+        })
+    return pd.DataFrame(rows)
 
 
 def sensitivity(bands: pd.DataFrame, lifts=LIFTS, margins=MARGINS) -> pd.DataFrame:

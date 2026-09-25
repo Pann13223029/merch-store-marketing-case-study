@@ -113,11 +113,51 @@ def funnel_rule_score(df: pd.DataFrame) -> np.ndarray:
     return df.max_ecommerce_step.astype(int).to_numpy() + df.pageviews.to_numpy() / 1e4
 
 
+def funnel_geo_rule_score(df: pd.DataFrame) -> np.ndarray:
+    """Baseline: North American first visits first, then the funnel rule within each group (no model).
+
+    The funnel-rule score stays below 10 (step <= 6, pageviews / 1e4 < 1), so the region always comes first.
+    """
+    return 10.0 * (df.sub_continent == "Northern America").to_numpy() + funnel_rule_score(df)
+
+
 # ---------------------------------------------------------------- evaluation
+# Every "top share" cut takes the k = round(n * frac) highest scores (at least 1); tied scores keep row order.
+
+def _top_k(s: np.ndarray, frac: float) -> np.ndarray:
+    return np.argsort(-s, kind="stable")[:max(1, int(round(len(s) * frac)))]
+
 
 def top_share_precision(y: np.ndarray, s: np.ndarray, frac: float) -> float:
+    """Share of positives among the top `frac` of scores."""
+    return float(np.mean(y[_top_k(s, frac)]))
+
+
+def top_share_count(y: np.ndarray, s: np.ndarray, frac: float) -> int:
+    """Number of positives ranked in the top `frac` of scores."""
+    return int(np.sum(y[_top_k(s, frac)]))
+
+
+def top_share_recall(y: np.ndarray, s: np.ndarray, frac: float) -> float:
+    """Share of all positives ranked in the top `frac` of scores."""
+    return top_share_count(y, s, frac) / float(np.sum(y))
+
+
+def bottom_share_count(y: np.ndarray, s: np.ndarray, frac: float) -> int:
+    """Number of positives ranked in the bottom `frac` of scores: everything below the top round(n * (1 - frac))."""
+    return int(np.sum(y[np.argsort(-s, kind="stable")[int(round(len(s) * (1 - frac))):]]))
+
+
+def expected_top_share_count(y: np.ndarray, s: np.ndarray, frac: float) -> float:
+    """top_share_count() if tied scores were ordered at random instead of by row order (expected value).
+
+    Rules such as funnel_rule_score() tie thousands of visitors, so a cut can fall inside a block of ties.
+    """
     k = max(1, int(round(len(s) * frac)))
-    return float(np.mean(y[np.argsort(-s, kind="stable")[:k]]))
+    groups = pd.DataFrame({"s": s, "y": y}).groupby("s", sort=True).y.agg(["size", "sum"]).iloc[::-1]
+    above = groups["size"].cumsum() - groups["size"]
+    taken = np.clip(k - above, 0, groups["size"])
+    return float((groups["sum"] * taken / groups["size"]).sum())
 
 
 def ranking_metrics(y: np.ndarray, s: np.ndarray) -> dict:
@@ -129,7 +169,7 @@ def ranking_metrics(y: np.ndarray, s: np.ndarray) -> dict:
         "lift_top_1pct": top_share_precision(y, s, 0.01) / base,
         "lift_top_5pct": top_share_precision(y, s, 0.05) / base,
         "lift_top_10pct": top_share_precision(y, s, 0.10) / base,
-        "recall_top_10pct": float(np.sum(y[np.argsort(-s, kind="stable")[: int(round(len(s) * 0.10))]]) / np.sum(y)),
+        "recall_top_10pct": top_share_recall(y, s, 0.10),
     }
 
 

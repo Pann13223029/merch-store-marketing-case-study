@@ -2,6 +2,7 @@
 
 - remarketing_table():  corrected D2 table: external first-visit non-buyers, label = purchase on a
                         later visit within 30 days, only first visits whose 30-day window fits in the data.
+                        internal_flag="first_visit" gives the look-ahead-free version a live campaign would score.
 
 The audit of Google's GSP229 lab runs on the lab's own table instead (sql/audit/a09-a13).
 """
@@ -39,17 +40,48 @@ def _split(dates: pd.Series) -> pd.Series:
     )
 
 
-def remarketing_table(sessions: pd.DataFrame) -> pd.DataFrame:
+INTERNAL_FLAGS = ("visitor", "first_visit")
+
+
+def remarketing_table(sessions: pd.DataFrame, internal_flag: str = "visitor") -> pd.DataFrame:
     """Corrected D2 table: one row per external visitor whose first visit is in the data.
 
     Population: first visit (visit_number = 1) did not purchase, and the first visit starts early
     enough (on or before 2017-07-01) that its full 30-day follow-up lies inside the data.
     Label: any purchase in a LATER visit starting within 30 days of the first visit's start.
+
+    internal_flag sets how Google employees are left out:
+      "visitor"      (default; the reported analysis) drop every visitor with the whole-year internal flag.
+                     That flag uses hindsight: some first-time visitors are flagged only by a LATER internal
+                     entry, which a live campaign can't know when it scores the first visit.
+      "first_visit"  drop a visitor only if the first visit itself is an internal entry, which is all that is
+                     knowable at scoring time. Later sessions of every kind, internal entries included, count
+                     toward the label. The result is the default table plus the visitors that only hindsight
+                     removed, with an extra column `is_internal` (the whole-year flag, True for those visitors)
+                     for evaluation only, never as a model feature. Shared rows keep the default table's values
+                     and order; the added rows are placed by first-visit start, after any default rows starting
+                     in the same second, so a ranking breaks ties the same way on both tables.
     """
-    ext = sessions[~sessions.is_internal].sort_values(["full_visitor_id", "visit_start_time"])
+    if internal_flag == "visitor":
+        return _first_visit_table(sessions[~sessions.is_internal], first_visit_rule=False)
+    if internal_flag == "first_visit":
+        table = _first_visit_table(sessions, first_visit_rule=True)
+        added = table[table.is_internal]
+        default = remarketing_table(sessions).assign(is_internal=False)
+        return (pd.concat([default, added], ignore_index=True)
+                .sort_values("first_start", kind="stable").reset_index(drop=True))
+    raise ValueError(f"internal_flag must be one of {INTERNAL_FLAGS}, not {internal_flag!r}")
+
+
+def _first_visit_table(sessions: pd.DataFrame, first_visit_rule: bool) -> pd.DataFrame:
+    """The D2 table built from `sessions`; with first_visit_rule, internal-entry first visits are dropped
+    and the whole-year `is_internal` flag is kept as a column."""
+    s = sessions.sort_values(["full_visitor_id", "visit_start_time"])
+    flags = dict(first_visit_internal=("is_internal_entry", "max"), is_internal=("is_internal", "max")) \
+        if first_visit_rule else {}
 
     # A first visit that crosses midnight appears as two rows with the same visit_id; merge them.
-    first_rows = ext[ext.visit_number == 1]
+    first_rows = s[s.visit_number == 1]
     first = first_rows.groupby(["full_visitor_id", "visit_id"], as_index=False).agg(
         first_start=("visit_start_time", "min"),
         session_date=("session_date", "min"),
@@ -71,12 +103,15 @@ def remarketing_table(sessions: pd.DataFrame) -> pd.DataFrame:
         checkout_events=("checkout_events", "sum"),
         max_ecommerce_step=("max_ecommerce_step", "max"),
         purchased_first_visit=("purchased", "max"),
+        **flags,
     )
     # 608 external visitors (0.09%) have two distinct visit_number = 1 visits; keep the earliest.
     first = first.sort_values("first_start").drop_duplicates("full_visitor_id", keep="first")
+    if first_visit_rule:
+        first = first[~first.first_visit_internal.astype(bool)].drop(columns="first_visit_internal")
 
-    later = ext.merge(first[["full_visitor_id", "visit_id", "first_start"]], on="full_visitor_id",
-                      suffixes=("", "_first"))
+    later = s.merge(first[["full_visitor_id", "visit_id", "first_start"]], on="full_visitor_id",
+                    suffixes=("", "_first"))
     later = later[
         (later.visit_id != later.visit_id_first)
         & (later.visit_start_time > later.first_start)
@@ -97,4 +132,6 @@ def remarketing_table(sessions: pd.DataFrame) -> pd.DataFrame:
     t["bounced"] = t.bounced.astype(int)
     t["split"] = _split(t.session_date).replace({"predict": "eval"})  # 2017-07-01 joins the test month
     t.loc[t.split == "eval", "split"] = "test"
+    if first_visit_rule:
+        t["is_internal"] = t.pop("is_internal").astype(bool)   # last column, after split
     return t.drop(columns=["purchased_first_visit"]).reset_index(drop=True)

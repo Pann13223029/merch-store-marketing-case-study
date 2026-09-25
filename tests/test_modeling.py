@@ -8,9 +8,10 @@ import pytest
 from sklearn.metrics import average_precision_score, roc_auc_score
 from threadpoolctl import threadpool_limits
 
-from src.modeling import (CV_FOLDS, LABEL, add_features, boosting_pipeline, bootstrap_metric_diff, cross_validate,
-                          funnel_rule_score, lab_features_pipeline, logistic_pipeline, random_forest_pipeline,
-                          ranking_metrics, rows_between, top_share_precision)
+from src.modeling import (CV_FOLDS, LABEL, add_features, boosting_pipeline, bootstrap_metric_diff, bottom_share_count,
+                          cross_validate, expected_top_share_count, funnel_geo_rule_score, funnel_rule_score,
+                          lab_features_pipeline, logistic_pipeline, random_forest_pipeline, ranking_metrics,
+                          rows_between, top_share_count, top_share_precision, top_share_recall)
 from src.tables import TRAIN_END, WINDOW_DAYS
 
 FOLD_IDS = [f"fold{k}" for k in range(1, len(CV_FOLDS) + 1)]
@@ -127,6 +128,18 @@ def test_funnel_rule_ranks_by_step_then_pageviews():
     assert np.argsort(-funnel_rule_score(df), kind="stable").tolist() == [1, 4, 2, 0, 5, 3]
 
 
+def test_funnel_geo_rule_puts_north_america_first_then_the_funnel_rule():
+    df = pd.DataFrame({
+        "sub_continent": ["Western Europe", "Northern America", "Northern America", "Southern Asia", "Northern America"],
+        "max_ecommerce_step": [6, 1, 3, 0, 3],
+        "pageviews": [469, 2, 5, 9, 50],
+    })
+    # a North American first visit that got nowhere still outranks a European one that reached checkout
+    assert np.argsort(-funnel_geo_rule_score(df), kind="stable").tolist() == [4, 2, 1, 0, 3]
+    raw = remarketing_frame(n=50)
+    assert funnel_geo_rule_score(add_features(raw)) == pytest.approx(funnel_geo_rule_score(raw))
+
+
 def test_funnel_rule_reads_the_step_after_add_features():
     df = remarketing_frame(n=50)
     features = add_features(df)
@@ -176,6 +189,37 @@ def test_top_share_precision_and_ranking_metrics():
     assert (m["lift_top_1pct"], m["lift_top_5pct"], m["lift_top_10pct"]) == pytest.approx((20.0, 12.0, 6.0))
     assert m["recall_top_10pct"] == pytest.approx(0.6)
     assert m["roc_auc"] == pytest.approx(roc_auc_score(y, s))
+
+
+def test_top_share_recall_and_bottom_share_count():
+    s = np.linspace(1, 0, 100)
+    y = np.zeros(100, dtype=int)
+    y[[0, 1, 2, 20, 50]] = 1
+    assert top_share_count(y, s, 0.10) == 3
+    assert top_share_recall(y, s, 0.10) == pytest.approx(0.6)
+    assert top_share_recall(y, s, 0.21) == pytest.approx(0.8)
+    assert top_share_recall(y, s, 0.001) == pytest.approx(0.2)    # at least one visitor
+    assert bottom_share_count(y, s, 0.50) == 1                     # rank 50 opens the bottom half
+    assert bottom_share_count(y, s, 0.49) == 0
+    assert bottom_share_count(y, s, 0.80) == 2
+    assert bottom_share_count(y, s, 1.0) == 5                      # everyone
+
+
+def test_expected_top_share_count_averages_over_tied_orders():
+    y = np.array([0, 1, 0, 1, 1])
+    s = np.array([2.0, 1.0, 1.0, 1.0, 0.0])                        # rows 1-3 tied, two of them buyers
+    assert top_share_count(y, s, 0.4) == 1                         # row order takes rows 0 and 1
+    assert expected_top_share_count(y, s, 0.4) == pytest.approx(2 / 3)
+    untied = np.array([5.0, 4.0, 3.0, 2.0, 1.0])
+    for frac in (0.2, 0.4, 0.6, 1.0):
+        assert expected_top_share_count(y, untied, frac) == pytest.approx(top_share_count(y, untied, frac))
+
+
+def test_top_share_cuts_keep_row_order_for_ties():
+    y = np.array([0, 1, 0, 1])
+    s = np.array([1.0, 1.0, 1.0, 0.0])                             # three tied at the top
+    assert top_share_recall(y, s, 0.50) == pytest.approx(0.5)     # rows 0 and 1
+    assert bottom_share_count(y, s, 0.50) == 1                     # rows 2 and 3
 
 
 def test_bootstrap_metric_diff_is_paired():

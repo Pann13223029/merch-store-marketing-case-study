@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.breakeven import BANDS, CENTRAL, REVENUE_CAP_USD, max_affordable_cost, sensitivity, value_by_band
+from src.breakeven import (BANDS, CENTRAL, REVENUE_CAP_USD, breakeven_lift, max_affordable_cost, sensitivity,
+                           value_by_band, value_of_targets)
 
 BAND_LABELS = ["Top 1%", "1%–2%", "2%–5%", "5%–10%", "10%–20%", "20%–50%", "50%–100%"]
 
@@ -75,3 +76,54 @@ def test_value_by_band_bootstrap_interval():
     assert (bands.rpv_ci_low <= bands.revenue_per_visitor).all()
     assert (bands.revenue_per_visitor <= bands.rpv_ci_high).all()
     pd.testing.assert_frame_equal(bands, value_by_band(np.zeros(1000, dtype=int), revenue, score, n_boot=200, seed=3))
+
+
+def test_breakeven_lift_inverts_max_affordable_cost():
+    assert breakeven_lift(0.10, 2.23) == pytest.approx(0.10 / (2.23 * 0.50))
+    lift = breakeven_lift(0.15, 3.0, margin=0.30)
+    assert max_affordable_cost(3.0, lift=lift, margin=0.30) == pytest.approx(0.15)
+
+
+def test_value_of_targets_arithmetic():
+    # revenue equal to rank: the top 1% of 1,000 visitors (ranks 0-9) spent 45, the top 10% (ranks 0-99) 4,950
+    rank, score = ranked_visitors(1000)
+    y = (rank < 20).astype(int)
+    v = value_of_targets(y, rank.astype(float), score, months=2.0, targets=(0.01, 0.10), n_boot=50)
+    assert v.target.tolist() == ["top 1%", "top 10%"]
+    assert v.visitors_per_month.tolist() == [5.0, 50.0]
+    assert v.share_of_later_buyers.tolist() == [0.5, 1.0]
+    assert v.revenue_per_visitor.tolist() == pytest.approx([4.5, 49.5])
+    assert v.gross_profit_per_month.tolist() == pytest.approx([45 * 0.05 / 2, 4950 * 0.05 / 2])
+    # lift 5% x margin 30% and lift 20% x margin 70% scale the central 10% x 50% by 0.3 and 2.8
+    assert v.range_low.tolist() == pytest.approx((v.gross_profit_per_month * 0.3).tolist())
+    assert v.range_high.tolist() == pytest.approx((v.gross_profit_per_month * 2.8).tolist())
+    assert (v.ci_low <= v.gross_profit_per_month).all() and (v.gross_profit_per_month <= v.ci_high).all()
+
+
+def test_value_of_targets_default_targets_match_the_band_table():
+    rank, score = ranked_visitors(2000)
+    revenue = np.random.default_rng(2).gamma(0.5, 40.0, 2000)
+    months = 2.0066
+    v = value_of_targets(np.ones(2000, dtype=int), revenue, score, months, n_boot=10)
+    bands = value_by_band(np.ones(2000, dtype=int), revenue, score, n_boot=10)
+    assert v.target.tolist() == ["top 1%", "top 5%", "top 10%", "top 20%"]
+    top1 = bands.revenue_per_visitor[0] * bands.visitors[0] * 0.05 / months
+    assert v.gross_profit_per_month[0] == pytest.approx(top1)
+
+
+def test_value_of_targets_zero_lift_visitors_cost_but_add_nothing():
+    rank, score = ranked_visitors(100)
+    revenue = np.where(rank == 1, 10_000.0, 10.0)   # rank 1 is a bulk buyer, capped at $1,606
+    staff = rank == 0
+    v = value_of_targets(np.ones(100, dtype=int), revenue, score, months=1.0, targets=(0.02,), zero_lift=staff,
+                         n_boot=20)
+    assert v.visitors_per_month[0] == 2                        # staff still count as remarketed visitors
+    assert v.revenue_per_visitor[0] == pytest.approx((0.0 + REVENUE_CAP_USD) / 2)
+
+
+def test_value_of_targets_is_reproducible():
+    rank, score = ranked_visitors(500)
+    revenue = np.random.default_rng(5).gamma(1.0, 20.0, 500)
+    a = value_of_targets(np.ones(500, dtype=int), revenue, score, months=1.0, n_boot=100, seed=7)
+    pd.testing.assert_frame_equal(a, value_of_targets(np.ones(500, dtype=int), revenue, score, months=1.0,
+                                                      n_boot=100, seed=7))

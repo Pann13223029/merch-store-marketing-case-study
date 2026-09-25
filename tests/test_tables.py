@@ -92,3 +92,52 @@ def test_outcome_counts_later_visits_in_the_window(session):
         session("v", T0 + WINDOW_S + 60, visit_number=5, purchased=True, revenue=999.0),   # too late
     ]))
     assert (rm.buy_within_30d[0], rm.revenue_30d_usd[0], rm.return_visits_30d[0]) == (1, 42.5, 3)
+
+
+# ---------------------------------------------------------------- internal_flag="first_visit" (no hindsight)
+
+def test_default_table_has_no_internal_column(session):
+    rm = remarketing_table(pd.DataFrame([session("v", T0)]))
+    assert rm.equals(remarketing_table(pd.DataFrame([session("v", T0)]), internal_flag="visitor"))
+    assert "is_internal" not in rm
+
+
+def test_first_visit_flag_drops_only_an_internal_first_visit(session):
+    # is_internal is the whole-year visitor flag; is_internal_entry marks the session that set it
+    sessions = pd.DataFrame([
+        session("keep", T0),
+        session("staff_first", T0, internal=True, is_internal_entry=True),        # knowable at scoring time
+        session("staff_first", T0 + 86400, visit_number=2, internal=True, purchased=True),
+        session("staff_later", T0 + 60, internal=True),                           # known only in hindsight
+        session("staff_later", T0 + 86400, visit_number=2, internal=True, is_internal_entry=True,
+                purchased=True, revenue=40.0),
+    ])
+    assert remarketing_table(sessions).full_visitor_id.tolist() == ["keep"]
+    rm = remarketing_table(sessions, internal_flag="first_visit")
+    assert rm.full_visitor_id.tolist() == ["keep", "staff_later"]
+    assert rm.is_internal.tolist() == [False, True]
+    # the later internal-entry session counts toward the label, as it would in a live campaign
+    assert (rm.buy_within_30d.tolist(), rm.revenue_30d_usd.tolist()) == ([0, 1], [0.0, 40.0])
+
+
+def test_first_visit_table_is_the_default_table_plus_the_added_visitors(session):
+    sessions = pd.DataFrame([
+        session("a", T0 + 10),
+        session("b", T0, pageviews=9),
+        session("staff", T0, internal=True),              # starts in the same second as "b": placed after it
+        session("staff", T0 + 3600, visit_number=2, internal=True, is_internal_entry=True),
+        session("c", T0 + 5, visit_id=3),
+        session("c", T0 + 7200, visit_number=2, purchased=True),
+    ])
+    default = remarketing_table(sessions)
+    rm = remarketing_table(sessions, internal_flag="first_visit")
+    assert default.full_visitor_id.tolist() == ["b", "c", "a"]
+    assert rm.full_visitor_id.tolist() == ["b", "staff", "c", "a"]
+    assert list(rm.columns) == list(default.columns) + ["is_internal"]
+    shared = rm[~rm.is_internal].drop(columns="is_internal").reset_index(drop=True)
+    pd.testing.assert_frame_equal(shared, default)
+
+
+def test_unknown_internal_flag_is_an_error(session):
+    with pytest.raises(ValueError, match="internal_flag"):
+        remarketing_table(pd.DataFrame([session("v", T0)]), internal_flag="session")
