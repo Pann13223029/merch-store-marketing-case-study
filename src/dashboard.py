@@ -1,6 +1,8 @@
 """Export small, dashboard-ready CSV files for the Looker Studio dashboard (dashboard/data/).
 
 Every file is an aggregate (no visitor-level rows), rebuilt from the cached pipeline outputs.
+Marketing figures cover outside visitors only: Google employees and key accounts (src/segments.py) appear only
+as their own segments in monthly_channel.csv.
 Run notebooks 01-05 first, then:  python -m src.dashboard
 """
 
@@ -14,6 +16,7 @@ import pandas as pd
 from src.attribution import MODELS, Attribution
 from src.breakeven import REVENUE_CAP_USD, value_by_band
 from src.modeling import LABEL, PIPELINES, add_features
+from src.segments import EXTERNAL, is_key_account, segment
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "dashboard" / "data"
@@ -30,10 +33,13 @@ MODEL_LABELS = {
 
 
 def monthly_channel(sessions: pd.DataFrame) -> pd.DataFrame:
-    """Sessions, purchases and revenue by month, channel (GA's label) and segment."""
+    """Sessions, purchases and revenue by month, channel (GA's label) and segment.
+
+    Segments: External, Internal (Google employees), and Key account.
+    """
     s = sessions.assign(
         month=sessions.session_date.dt.strftime("%Y-%m-01"),   # a full date, which Looker Studio types as Date
-        segment=np.where(sessions.is_internal, "Internal (Google employees)", "External"),
+        segment=segment(sessions),
         revenue_capped_usd=sessions.revenue_usd.clip(upper=REVENUE_CAP_USD),
     )
     s = s[s.month <= "2017-07-01"]   # 2017-08 holds a single day
@@ -44,8 +50,8 @@ def monthly_channel(sessions: pd.DataFrame) -> pd.DataFrame:
 
 
 def channel_profile(sessions: pd.DataFrame) -> pd.DataFrame:
-    """External traffic by channel as GA labels it (the store's own channel report)."""
-    ext = sessions[~sessions.is_internal]
+    """External traffic by channel as GA labels it (the store's own channel report), without key accounts."""
+    ext = sessions[segment(sessions) == EXTERNAL]
     p = (ext.assign(revenue_capped_usd=ext.revenue_usd.clip(upper=REVENUE_CAP_USD))
          .groupby("channel", as_index=False)
          .agg(sessions=("session_key", "size"), visitors=("full_visitor_id", "nunique"),
@@ -57,11 +63,14 @@ def channel_profile(sessions: pd.DataFrame) -> pd.DataFrame:
 
 def attribution_tables(journeys: pd.DataFrame, touches: pd.DataFrame, n_boot: int = 1000,
                        seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """(credit by channel and model with 95% CIs, value per click for paid channels)."""
+    """(credit by channel and model with 95% CIs, value per click for paid channels).
+
+    The intervals come from a bootstrap that resamples visitors, all of a visitor's journeys together.
+    """
     att = Attribution(journeys, "arrival_path", order=MARKOV_ORDER)
     table = att.credit_table()
     shares = att.shares()
-    boot = att.bootstrap_shares(n_boot=n_boot, seed=seed)
+    boot = att.bootstrap_shares(n_boot=n_boot, seed=seed, clusters=journeys.full_visitor_id)
     low, high = np.percentile(boot, [2.5, 97.5], axis=0)
     rows = []
     for k, m in enumerate(MODELS):
@@ -108,6 +117,9 @@ def main() -> None:
     sessions = pd.read_parquet(ROOT / "data/raw/sessions_clean.parquet")
     journeys = pd.read_parquet(ROOT / "data/processed/journeys.parquet")
     touches = pd.read_parquet(ROOT / "data/processed/touches.parquet")
+    # src/journeys.py leaves key accounts out; dropping them here also covers tables built before that rule
+    journeys = journeys[~is_key_account(journeys.full_visitor_id)].reset_index(drop=True)
+    touches = touches[~is_key_account(touches.full_visitor_id)].reset_index(drop=True)
     remarketing = pd.read_parquet(ROOT / "data/processed/remarketing_table.parquet")
     tuning = pd.read_json(ROOT / "data/processed/tuning_results.json")
 

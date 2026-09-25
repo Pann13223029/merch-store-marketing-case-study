@@ -1,14 +1,17 @@
-"""Tests for src/journeys.py: journey splitting, the 30-day lookback, the analysis period, channel labels."""
+"""Tests for src/journeys.py: who is in, journey splitting, the 30-day lookback, the analysis period, channel
+labels, and the revenue cap."""
 
 from __future__ import annotations
 
 import pandas as pd
 import pytest
 
-from src.journeys import WINDOW_S, journeys, touches
+from src.journeys import WINDOW_S, journeys, revenue_cap, touches
+from src.segments import KEY_ACCOUNTS
 
 DAY = 86400
 T0 = int(pd.Timestamp("2017-01-10 12:00", tz="UTC").timestamp())
+KEY = next(iter(KEY_ACCOUNTS))
 
 
 def journey_ids(t: pd.DataFrame) -> list[int]:
@@ -65,6 +68,34 @@ def test_analysis_period_is_set_by_the_journey_end(session, last_day, kept):
 def test_internal_visitors_are_excluded(session):
     t = touches(pd.DataFrame([session("staff", T0, internal=True), session("v", T0)]))
     assert t.full_visitor_id.tolist() == ["v"]
+
+
+def test_key_accounts_are_excluded_like_employees(session):
+    t = touches(pd.DataFrame([
+        session(KEY, T0, channel="Display", source="dfa"),
+        session(KEY, T0 + DAY, visit_number=2, channel="Display", source="dfa", is_true_direct=True, purchased=True,
+                revenue=47_082.06),
+        session("v", T0),
+    ]))
+    assert t.full_visitor_id.tolist() == ["v"]
+
+
+def test_revenue_cap_is_set_on_all_outside_purchases_in_the_period(session):
+    # Median for readable numbers. Key accounts count (the cap was set with them in), employees and purchases
+    # outside the analysis period don't, and neither do sessions without a purchase.
+    rows = [
+        session("a", "2016-08-31 12:00", purchased=True, revenue=10.0),    # first day of the period
+        session("b", "2017-07-01 12:00", purchased=True, revenue=20.0),    # last day of the period
+        session(KEY, "2017-04-05 12:00", purchased=True, revenue=47_082.06),
+        session("c", "2017-01-10 12:00"),                                  # no purchase
+        session("staff", "2017-01-10 12:00", internal=True, purchased=True, revenue=5_000.0),
+        session("d", "2016-08-30 12:00", purchased=True, revenue=3_000.0),    # before the period
+        session("e", "2017-07-02 12:00", purchased=True, revenue=4_000.0),    # after it
+    ]
+    df = pd.DataFrame(rows)
+    assert revenue_cap(df, quantile=0.5) == 20.0
+    assert revenue_cap(df.iloc[[0, 1]], quantile=0.5) == 15.0   # without the key account the median would fall
+    assert revenue_cap(df) == pytest.approx(20.0 + 0.98 * (47_082.06 - 20.0))   # the 99th percentile by default
 
 
 def test_three_channel_labels(session):

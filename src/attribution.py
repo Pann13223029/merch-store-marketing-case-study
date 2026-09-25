@@ -19,10 +19,16 @@ Models (credit per purchase sums to 1):
                   values that actually follow them (value removal effect).
 
 Uncertainty: a Poisson bootstrap reweights journeys (weight ~ Poisson(1)) and recomputes every model
-on the same weights, so differences between models are paired.
+on the same weights, so differences between models are paired. Passing the visitor as the cluster gives
+all of a visitor's journeys one shared weight, so repeat buyers are resampled as a unit.
+
+Paid Search keywords (search_keyword_class) sort each ad click's keyword into brand or store-name
+searches, other readable keywords, targeting placeholders, obfuscated IDs, and missing values.
 """
 
 from __future__ import annotations
+
+import re
 
 import numpy as np
 import pandas as pd
@@ -145,12 +151,24 @@ class Attribution:
         t = self.credit_table(journey_weights).xs(measure, axis=1, level="measure")
         return t / t.sum()
 
-    def bootstrap_shares(self, n_boot: int = 1000, seed: int = 42, measure: str = "conversions") -> np.ndarray:
-        """Array (n_boot, n_channels, n_models) of credit shares under Poisson journey weights."""
+    def bootstrap_shares(self, n_boot: int = 1000, seed: int = 42, measure: str = "conversions",
+                         clusters: np.ndarray | pd.Series | None = None) -> np.ndarray:
+        """Array (n_boot, n_channels, n_models) of credit shares under Poisson journey weights.
+
+        With `clusters` (one label per journey, such as the visitor), each cluster draws one Poisson(1)
+        weight that all its journeys share, so a visitor's journeys are resampled together.
+        """
+        if clusters is None:
+            codes, n_draws = np.arange(self.n_journeys), self.n_journeys
+        else:
+            if len(clusters) != self.n_journeys:
+                raise ValueError(f"clusters needs one label per journey ({self.n_journeys}), got {len(clusters)}")
+            codes, labels = pd.factorize(np.asarray(clusters))
+            n_draws = len(labels)
         rng = np.random.default_rng(seed)
         out = np.empty((n_boot, len(self.channels), len(MODELS)))
         for b in range(n_boot):
-            s = self.shares(rng.poisson(1.0, self.n_journeys).astype(float), measure)
+            s = self.shares(rng.poisson(1.0, n_draws)[codes].astype(float), measure)
             out[b] = s[MODELS].to_numpy()
         return out
 
@@ -240,7 +258,7 @@ def credit_vs_presence(att: Attribution, model: str = "markov", measure: str = "
     stay within that bound by construction. GA's last click can exceed it, because GA may label the
     purchase session with a campaign from outside the journey, and so can the Markov chain, which
     recombines observed steps into paths nobody took (the third-order chain credits Affiliates with
-    16.2 purchases from 4 purchasing journeys).
+    16.1 purchases from 4 purchasing journeys).
 
     Returns one row per channel: credited (credit under `model`), presence (converting journeys that
     contain the channel, or their capped revenue when measure="revenue"), and exceeds_presence.
@@ -257,3 +275,36 @@ def credit_vs_presence(att: Attribution, model: str = "markov", measure: str = "
         "presence": presence,
         "exceeds_presence": (credited > presence) & ~np.isclose(credited, presence),   # beyond float rounding
     }, index=att.channels)
+
+
+# ---------------------------------------------------------------------- Paid Search keywords
+KEYWORD_CLASSES = ["Brand or store name", "Readable, no brand", "Targeting or automatic", "Obfuscated ID", "Missing"]
+BRAND_TERMS = re.compile(r"\b(?:google|goggle|youtube|android|chrome|nest)\b")   # the store's brands, and a typo
+AD_CATEGORIES = {"arts & entertainment"}   # Google Ads audience categories that appear as keywords
+
+
+def search_keyword_class(keyword: object) -> str:
+    """Sort a Paid Search click's keyword (trafficSource.keyword) into one of KEYWORD_CLASSES.
+
+      Missing                 no keyword, "(not provided)" or "(not set)"
+      Targeting or automatic  a placeholder in parentheses such as "(automatic matching)" or
+                              "(Remarketing/Content targeting)", a product-feed rule ("category_l1==166",
+                              "brand==nest"), or an audience category ("Arts & Entertainment")
+      Obfuscated ID           a 16-character token such as "6qEhsCssdK0z36ri", which hides the query
+      Brand or store name     names one of the store's brands (Google, YouTube, Android, Chrome, Nest), for
+                              example "google merchandise store", "+youtube +merch", "google stickers"
+      Readable, no brand      any other readable keyword, for example "+mens +sunglasses"
+    """
+    if keyword is None or pd.isna(keyword) or not str(keyword).strip():
+        return "Missing"
+    text = str(keyword).strip()
+    lower = text.lower()
+    if lower in ("(not provided)", "(not set)"):
+        return "Missing"
+    if (text.startswith("(") and text.endswith(")")) or "==" in text or lower in AD_CATEGORIES:
+        return "Targeting or automatic"
+    if re.fullmatch(r"[A-Za-z0-9_-]{16}", text) and re.search(r"\d", text):
+        return "Obfuscated ID"
+    if BRAND_TERMS.search(lower.replace("+", " ")):
+        return "Brand or store name"
+    return "Readable, no brand"

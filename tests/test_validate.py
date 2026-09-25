@@ -1,7 +1,10 @@
-"""Tests for src/validate.py:validate_sessions(), which reports each check as PASS or FAIL (it doesn't raise).
+"""Tests for src/validate.py.
 
-The checks compare the extract with totals measured on the raw BigQuery tables. A small synthetic table
-can't match those, so most tests swap RAW for the synthetic table's own totals.
+validate_sessions() reports each check as PASS or FAIL (it doesn't raise). The checks compare the extract with
+totals measured on the raw BigQuery tables. A small synthetic table can't match those, so most tests swap RAW
+for the synthetic table's own totals.
+
+visitor_concentration() flags buyers who hold a large share of a channel's revenue.
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ import pandas as pd
 import pytest
 
 from src import validate
-from src.validate import validate_sessions
+from src.validate import validate_sessions, visitor_concentration
 
 N_CHECKS = 15
 SYNTHETIC_TOTALS = {
@@ -103,3 +106,57 @@ def test_purchases_without_revenue_must_stay_rare(sessions, synthetic_totals, se
     free = [session(f"z{i}", "2017-02-01 10:00", purchased=True, revenue=0.0) for i in range(60)]
     checks = validate_sessions(pd.concat([sessions, pd.DataFrame(free)], ignore_index=True))
     assert "Purchase sessions without revenue stay negligible (< 60)" in failed(checks)
+
+
+# ---------------------------------------------------------------- visitor concentration
+
+def purchases_frame(rows: list[tuple[str, str, float]]) -> pd.DataFrame:
+    """Purchase sessions from (channel, visitor, revenue) rows."""
+    return pd.DataFrame(rows, columns=["channel", "full_visitor_id", "revenue_usd"])
+
+
+@pytest.fixture
+def purchases() -> pd.DataFrame:
+    return purchases_frame([
+        ("Display", "big", 50.0), ("Display", "big", 10.0), ("Display", "y", 30.0), ("Display", "z", 10.0),
+        *[("Organic Search", f"v{i}", 20.0) for i in range(5)],   # five buyers at exactly 20% each
+        ("Affiliates", "w", 0.0),
+    ])
+
+
+def test_concentration_totals_and_top_buyer(purchases):
+    c = visitor_concentration(purchases, "channel")
+    assert c.index.tolist() == ["Display", "Organic Search", "Affiliates"]   # largest revenue first
+    assert c.loc["Display", ["purchases", "buyers", "revenue", "top_visitor"]].tolist() == [4, 3, 100.0, "big"]
+    assert c.loc["Display", "top_share"] == pytest.approx(0.6)   # a buyer's purchases add up
+    assert c.loc["Organic Search", "top_share"] == pytest.approx(0.2)
+
+
+def test_concentration_flags_every_buyer_above_the_threshold(purchases):
+    c = visitor_concentration(purchases, "channel")
+    assert c.loc["Display", "flagged"] == ["big", "y"]           # 60% and 30%, largest first
+    assert c.loc["Organic Search", "flagged"] == []               # exactly 20% is not more than 20%
+    assert visitor_concentration(purchases, "channel", threshold=0.5).loc["Display", "flagged"] == ["big"]
+
+
+def test_concentration_top_n_share(purchases):
+    c = visitor_concentration(purchases, "channel", top_n=2)
+    assert c.loc["Display", "top_n_share"] == pytest.approx(0.9)
+    assert c.loc["Organic Search", "top_n_share"] == pytest.approx(0.4)
+    assert visitor_concentration(purchases, "channel").loc["Display", "top_n_share"] == pytest.approx(1.0)
+
+
+def test_concentration_of_a_channel_without_revenue(purchases):
+    c = visitor_concentration(purchases, "channel")
+    assert np.isnan(c.loc["Affiliates", "top_share"]) and np.isnan(c.loc["Affiliates", "top_n_share"])
+    assert c.loc["Affiliates", "flagged"] == []
+
+
+def test_concentration_by_other_labels_and_revenue(purchases):
+    # another label column (the Display purchases arrived direct) and revenue capped per purchase at $20
+    p = purchases.assign(arrival_channel=purchases.channel.replace({"Display": "Direct"}),
+                         capped=purchases.revenue_usd.clip(upper=20.0))
+    c = visitor_concentration(p, "arrival_channel", "capped")
+    assert c.loc["Direct", "revenue"] == pytest.approx(60.0)      # 20 + 10 + 20 + 10
+    assert c.loc["Direct", "top_share"] == pytest.approx(0.5)     # "big": 20 + 10
+    assert c.loc["Direct", "flagged"] == ["big", "y"]

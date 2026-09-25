@@ -439,3 +439,44 @@ def value_strip_chart(groups: list[str], points: dict[str, dict[str, float]], hi
         lx += 16 + t.get_window_extent().width / (fig.dpi / PX_PER_IN) + 26
     footnote(fig, note)
     return fig
+
+
+def assumption_line_chart(x: list[float], y: list[float], band: tuple[float, float], title: str, subtitle: str,
+                          note: str, x_label: str, band_label: str, end_labels: tuple[str, str],
+                          x_fmt=lambda v: f"{v:.0%}", y_fmt=lambda v: f"{v:.0f} pts"):
+    """How an estimate moves with an assumption the data can't check (one series).
+
+    x: assumption values from 0 to 1, y: the estimate at each (drawn as one line). band: the (low, high) range of
+    the assumption that outside evidence supports, drawn as a wash with its two points marked and `band_label`
+    written inside it. end_labels: text for the points at x = 0 and x = 1, placed clear of the line.
+    """
+    apply_style()
+    order = np.argsort(x)
+    xs, ys = np.asarray(x, float)[order], np.asarray(y, float)[order]
+    fig, ax = figure(760, 500, plot_box=(72, 124, 48, 112))
+    ticks = nice_ticks(ys.max() * 1.25, max_ticks=6)
+    step = ticks[1] - ticks[0]
+    ticks = np.arange(0, step * np.ceil(ys.max() * 1.25 / step) + 1e-9, step)   # the top tick clears the line
+    ax.set_xlim(-0.02, 1.02)   # room for the end dots
+    ax.set_ylim(0, ticks[-1])
+    ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0], [x_fmt(t) for t in [0, 0.25, 0.5, 0.75, 1.0]])
+    ax.set_yticks(ticks, [y_fmt(t) for t in ticks])
+    ax.grid(axis="y", zorder=0)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color(AXIS)
+    ax.set_xlabel(x_label, fontsize=px(11), color=MUTED, labelpad=8)
+    lo, hi = band
+    ax.axvspan(lo, hi, color=SERIES_1, alpha=0.10, lw=0, zorder=1)
+    ax.plot(xs, ys, color=SERIES_1, lw=px(2), solid_joinstyle="round", solid_capstyle="round", zorder=3)
+    for xv in (0.0, lo, hi, 1.0):
+        dot(ax, xv, float(np.interp(xv, xs, ys)), SERIES_1, diameter_px=9)
+    y_band = np.interp([lo, hi], xs, ys)
+    ax.text((lo + hi) / 2, y_band.min() * 0.45, band_label, ha="center", va="center", fontsize=px(11.5),
+            color=INK, linespacing=1.4, zorder=5)
+    y0, y1 = float(np.interp(0.0, xs, ys)), float(np.interp(1.0, xs, ys))
+    dx, dy = _data_per_px(ax)
+    ax.text(0.012, y0 + 12 * dy, end_labels[0], ha="left", va="bottom", fontsize=px(11.5), color=INK, zorder=5)
+    ax.text(1.0 - 14 * dx, y1 - 6 * dy, end_labels[1], ha="right", va="center", fontsize=px(11.5), color=INK, zorder=5)
+    header(fig, title, subtitle)
+    footnote(fig, note)
+    return fig

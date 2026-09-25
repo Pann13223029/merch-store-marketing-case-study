@@ -6,8 +6,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2016-08-01,Direct,Internal (Google employees),424,6,1970.38,1970.38
 2016-08-01,Display,External,403,13,1521.02,1521.02
 2016-08-01,Display,Internal (Google employees),46,1,56.0,56.0
-2016-08-01,Organic Search,External,23713,319,59331.26,47075.94
+2016-08-01,Organic Search,External,23672,319,59331.26,47075.94
 2016-08-01,Organic Search,Internal (Google employees),430,5,943.03,943.03
+2016-08-01,Organic Search,Key account,41,0,0.0,0.0
 2016-08-01,Paid Search,External,1451,29,3493.53,3493.53
 2016-08-01,Paid Search,Internal (Google employees),16,0,0.0,0.0
 2016-08-01,Referral,External,2519,12,1732.13,1732.13
@@ -21,8 +22,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2016-09-01,Direct,Internal (Google employees),296,6,2070.14,2070.14
 2016-09-01,Display,External,369,9,2782.82,2732.25
 2016-09-01,Display,Internal (Google employees),47,2,165.29,165.29
-2016-09-01,Organic Search,External,25328,249,26915.76,24838.78
+2016-09-01,Organic Search,External,25301,249,26915.76,24838.78
 2016-09-01,Organic Search,Internal (Google employees),309,6,1360.93,1360.93
+2016-09-01,Organic Search,Key account,27,0,0.0,0.0
 2016-09-01,Paid Search,External,1576,35,4940.94,4940.94
 2016-09-01,Paid Search,Internal (Google employees),13,0,0.0,0.0
 2016-09-01,Referral,External,2671,16,1650.12,1650.12
@@ -35,8 +37,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2016-10-01,Direct,Internal (Google employees),254,8,1483.38,1483.38
 2016-10-01,Display,External,509,6,568.03,568.03
 2016-10-01,Display,Internal (Google employees),71,1,146.8,146.8
-2016-10-01,Organic Search,External,33012,291,33058.04,31289.71
+2016-10-01,Organic Search,External,32993,291,33058.04,31289.71
 2016-10-01,Organic Search,Internal (Google employees),287,5,799.96,799.96
+2016-10-01,Organic Search,Key account,19,0,0.0,0.0
 2016-10-01,Paid Search,External,1924,35,2995.69,2995.69
 2016-10-01,Paid Search,Internal (Google employees),18,0,0.0,0.0
 2016-10-01,Referral,External,2782,14,2395.42,2395.42
@@ -50,8 +53,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2016-11-01,Direct,Internal (Google employees),306,6,3362.57,3362.57
 2016-11-01,Display,External,618,11,822.9,822.9
 2016-11-01,Display,Internal (Google employees),68,2,737.28,737.28
-2016-11-01,Organic Search,External,31748,277,31127.36,30212.46
+2016-11-01,Organic Search,External,31725,277,31127.36,30212.46
 2016-11-01,Organic Search,Internal (Google employees),291,7,516.34,516.34
+2016-11-01,Organic Search,Key account,23,0,0.0,0.0
 2016-11-01,Paid Search,External,2423,46,3918.72,3918.72
 2016-11-01,Paid Search,Internal (Google employees),24,0,0.0,0.0
 2016-11-01,Referral,External,2984,17,5449.16,5449.16
@@ -64,8 +68,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2016-12-01,Direct,Internal (Google employees),304,8,2933.88,2933.88
 2016-12-01,Display,External,741,13,1637.34,1637.34
 2016-12-01,Display,Internal (Google employees),86,1,816.1,816.1
-2016-12-01,Organic Search,External,31706,365,26551.46,26468.74
+2016-12-01,Organic Search,External,31684,365,26551.46,26468.74
 2016-12-01,Organic Search,Internal (Google employees),302,15,1518.66,1518.66
+2016-12-01,Organic Search,Key account,22,0,0.0,0.0
 2016-12-01,Paid Search,External,3594,77,6810.36,6810.36
 2016-12-01,Paid Search,Internal (Google employees),37,2,303.6,303.6
 2016-12-01,Referral,External,2732,28,4674.58,4674.58
@@ -79,8 +84,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-01-01,Direct,Internal (Google employees),258,2,264.81,264.81
 2017-01-01,Display,External,591,21,2678.44,2678.44
 2017-01-01,Display,Internal (Google employees),69,2,187.11,187.11
-2017-01-01,Organic Search,External,28564,201,19766.21,18358.57
+2017-01-01,Organic Search,External,28561,201,19766.21,18358.57
 2017-01-01,Organic Search,Internal (Google employees),205,5,1459.27,1459.27
+2017-01-01,Organic Search,Key account,3,0,0.0,0.0
 2017-01-01,Paid Search,External,2505,28,2553.82,2553.82
 2017-01-01,Paid Search,Internal (Google employees),28,1,109.95,109.95
 2017-01-01,Referral,External,2491,11,3917.25,3917.25
@@ -88,12 +94,14 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-01-01,Social,External,10438,6,254.84,254.84
 2017-01-01,Social,Internal (Google employees),16,0,0.0,0.0
 2017-02-01,Affiliates,External,1214,1,30.99,30.99
-2017-02-01,Direct,External,10175,160,53891.47,36366.97
+2017-02-01,Direct,External,10157,159,36031.97,34760.97
 2017-02-01,Direct,Internal (Google employees),211,14,3772.14,3772.14
+2017-02-01,Direct,Key account,18,1,17859.5,1606.0
 2017-02-01,Display,External,454,8,1540.9,1540.9
 2017-02-01,Display,Internal (Google employees),72,2,88.96,88.96
-2017-02-01,Organic Search,External,30083,216,17334.21,17334.21
+2017-02-01,Organic Search,External,30082,216,17334.21,17334.21
 2017-02-01,Organic Search,Internal (Google employees),249,11,1820.8,1820.8
+2017-02-01,Organic Search,Key account,1,0,0.0,0.0
 2017-02-01,Paid Search,External,2025,21,2321.35,2321.35
 2017-02-01,Paid Search,Internal (Google employees),21,3,180.53,180.53
 2017-02-01,Referral,External,2828,11,2756.14,2756.14
@@ -103,10 +111,12 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-03-01,(Other),External,4,0,0.0,0.0
 2017-03-01,Affiliates,External,1465,1,9.97,9.97
 2017-03-01,Affiliates,Internal (Google employees),3,0,0.0,0.0
-2017-03-01,Direct,External,11005,145,45342.27,40932.47
+2017-03-01,Direct,External,10977,145,45342.27,40932.47
 2017-03-01,Direct,Internal (Google employees),241,8,2505.19,2505.19
-2017-03-01,Display,External,355,4,8950.57,1875.74
+2017-03-01,Direct,Key account,28,0,0.0,0.0
+2017-03-01,Display,External,343,3,269.74,269.74
 2017-03-01,Display,Internal (Google employees),56,2,234.13,234.13
+2017-03-01,Display,Key account,12,1,8680.83,1606.0
 2017-03-01,Organic Search,External,34739,312,36553.5,33959.0
 2017-03-01,Organic Search,Internal (Google employees),221,8,729.65,729.65
 2017-03-01,Paid Search,External,1225,20,2406.82,2406.82
@@ -121,8 +131,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-04-01,Affiliates,Internal (Google employees),1,0,0.0,0.0
 2017-04-01,Direct,External,12469,160,26669.5,23646.95
 2017-04-01,Direct,Internal (Google employees),189,7,1173.55,1173.55
-2017-04-01,Display,External,177,7,93049.04,8303.08
+2017-04-01,Display,External,148,2,273.08,273.08
 2017-04-01,Display,Internal (Google employees),32,1,194.71,194.71
+2017-04-01,Display,Key account,29,5,92775.96,8030.0
 2017-04-01,Organic Search,External,32094,281,23598.56,23598.56
 2017-04-01,Organic Search,Internal (Google employees),251,12,2448.77,2448.77
 2017-04-01,Paid Search,External,1167,25,4702.64,4702.64
@@ -136,8 +147,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-05-01,Affiliates,External,1317,0,0.0,0.0
 2017-05-01,Direct,External,15343,287,34380.86,32853.78
 2017-05-01,Direct,Internal (Google employees),256,22,3337.36,3337.36
-2017-05-01,Display,External,380,6,3442.73,2274.62
+2017-05-01,Display,External,354,5,3025.77,1857.66
 2017-05-01,Display,Internal (Google employees),47,1,49.59,49.59
+2017-05-01,Display,Key account,26,1,416.96,416.96
 2017-05-01,Organic Search,External,32710,271,25994.95,24904.25
 2017-05-01,Organic Search,Internal (Google employees),489,18,2754.81,2754.81
 2017-05-01,Paid Search,External,1867,35,3797.84,3797.84
@@ -149,8 +161,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-06-01,Affiliates,External,1313,0,0.0,0.0
 2017-06-01,Direct,External,10287,124,25875.78,19201.5
 2017-06-01,Direct,Internal (Google employees),166,6,867.55,867.55
-2017-06-01,Display,External,287,10,8878.21,7249.65
+2017-06-01,Display,External,269,2,198.94,198.94
 2017-06-01,Display,Internal (Google employees),55,0,0.0,0.0
+2017-06-01,Display,Key account,18,8,8679.27,7050.71
 2017-06-01,Organic Search,External,35505,245,31309.38,26463.63
 2017-06-01,Organic Search,Internal (Google employees),324,10,1822.38,1822.38
 2017-06-01,Paid Search,External,3155,55,4467.6,4467.6
@@ -164,8 +177,9 @@ month,channel,segment,sessions,purchases,revenue_usd,revenue_capped_usd
 2017-07-01,Affiliates,Internal (Google employees),7,0,0.0,0.0
 2017-07-01,Direct,External,12194,120,62447.57,23942.44
 2017-07-01,Direct,Internal (Google employees),112,2,853.36,853.36
-2017-07-01,Display,External,630,19,1748.3,1748.3
+2017-07-01,Display,External,621,19,1748.3,1748.3
 2017-07-01,Display,Internal (Google employees),60,0,0.0,0.0
+2017-07-01,Display,Key account,9,0,0.0,0.0
 2017-07-01,Organic Search,External,37394,288,27421.14,26533.14
 2017-07-01,Organic Search,Internal (Google employees),261,20,1210.84,1210.84
 2017-07-01,Paid Search,External,2090,48,3743.03,3743.03

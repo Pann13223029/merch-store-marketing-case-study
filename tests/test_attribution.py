@@ -1,4 +1,5 @@
-"""Tests for src/attribution.py: the credit rules, the Markov chain, conservation, and the presence check.
+"""Tests for src/attribution.py: the credit rules, the Markov chain, conservation, the bootstrap, the presence
+check, and the Paid Search keyword classes.
 
 The toy journeys used throughout: "A > B" buys ($30), "A" doesn't buy, "B" buys ($90).
 """
@@ -9,8 +10,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.attribution import (HEURISTIC_MODELS, MODELS, Attribution, credit_vs_presence, markov_holdout_loglik,
-                             markov_transitions, starter_closer)
+from src.attribution import (HEURISTIC_MODELS, KEYWORD_CLASSES, MODELS, Attribution, credit_vs_presence,
+                             markov_holdout_loglik, markov_transitions, search_keyword_class, starter_closer)
 
 # The heuristics that credit only channels in the path (GA's label can name a campaign from outside it)
 PATH_MODELS = [m for m in HEURISTIC_MODELS if m != "ga_last_click"]
@@ -223,6 +224,30 @@ def test_bootstrap_shares_reweight_journeys_with_poisson_draws():
     assert np.array_equal(boot, att.bootstrap_shares(n_boot=20, seed=7))
 
 
+def test_one_cluster_per_journey_is_the_journey_bootstrap():
+    att = Attribution(random_journeys(), order=2)
+    each_alone = [f"v{i}" for i in range(att.n_journeys)]
+    assert np.array_equal(att.bootstrap_shares(n_boot=5, seed=3, clusters=each_alone),
+                          att.bootstrap_shares(n_boot=5, seed=3))
+
+
+def test_cluster_bootstrap_gives_a_visitors_journeys_one_weight():
+    j = random_journeys(n=120)
+    visitors = np.repeat([f"v{i}" for i in range(40)], 3)   # three journeys per visitor
+    att = Attribution(j, order=2)
+    boot = att.bootstrap_shares(n_boot=3, seed=5, clusters=pd.Series(visitors))
+    codes, _ = pd.factorize(visitors)
+    first_draw = np.random.default_rng(5).poisson(1.0, 40)[codes].astype(float)
+    assert boot[0] == pytest.approx(att.shares(first_draw)[MODELS].to_numpy())
+    assert boot.sum(axis=1) == pytest.approx(np.ones((3, len(MODELS))))
+
+
+def test_cluster_bootstrap_needs_one_label_per_journey():
+    att = Attribution(random_journeys(n=30), order=1)
+    with pytest.raises(ValueError, match="one label per journey"):
+        att.bootstrap_shares(n_boot=2, clusters=["v1", "v2"])
+
+
 # ---------------------------------------------------------------- credit vs presence
 
 def test_presence_counts_the_converting_journeys_that_contain_each_channel(toy):
@@ -271,3 +296,47 @@ def test_path_based_credit_never_exceeds_presence(measure):
 def test_presence_check_rejects_other_measures(toy):
     with pytest.raises(ValueError, match="measure"):
         credit_vs_presence(toy, measure="removal_effect")
+
+
+# ---------------------------------------------------------------- Paid Search keywords
+
+@pytest.mark.parametrize("keyword, expected", [
+    ("google merchandise store", "Brand or store name"),
+    ("Google Merchandise", "Brand or store name"),
+    ("+google +store", "Brand or store name"),
+    ("+google+tshirts", "Brand or store name"),       # modifiers without spaces
+    ("+google.com +shop", "Brand or store name"),
+    ("youtube merch", "Brand or store name"),
+    ("YouTube Merchandise", "Brand or store name"),
+    ("Android Merchandise", "Brand or store name"),
+    ("Chrome kit", "Brand or store name"),
+    ("nest products", "Brand or store name"),
+    ("goggle store", "Brand or store name"),         # the store's name, misspelled
+    ("google stickers", "Brand or store name"),
+    ("+mens +sunglasses", "Readable, no brand"),
+    ("+woman shades", "Readable, no brand"),
+    ("googleplex tour", "Readable, no brand"),       # brand terms match whole words only
+    ("(Remarketing/Content targeting)", "Targeting or automatic"),
+    ("(User vertical targeting)", "Targeting or automatic"),
+    ("(automatic matching)", "Targeting or automatic"),
+    ("(content targeting)", "Targeting or automatic"),
+    ("Arts & Entertainment", "Targeting or automatic"),
+    ("category_l1==166", "Targeting or automatic"),
+    ("brand==nest", "Targeting or automatic"),
+    ("product_type_l1==wearables&+product_type_l2==men's t-shirts", "Targeting or automatic"),
+    ("6qEhsCssdK0z36ri", "Obfuscated ID"),
+    ("1hZbAqLCbjwfgOH7", "Obfuscated ID"),
+    ("1X4Me6ZKNV0zg-jV", "Obfuscated ID"),
+    (None, "Missing"),
+    (np.nan, "Missing"),
+    ("", "Missing"),
+    ("(not provided)", "Missing"),
+    ("(not set)", "Missing"),
+])
+def test_search_keyword_class(keyword, expected):
+    assert search_keyword_class(keyword) == expected
+    assert expected in KEYWORD_CLASSES
+
+
+def test_sixteen_letters_without_a_digit_are_not_an_id():
+    assert search_keyword_class("merchandisestore") == "Readable, no brand"

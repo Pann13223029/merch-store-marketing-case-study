@@ -1,22 +1,22 @@
 channel,model,value_per_click_usd,clicks
 Paid Search,GA report (last non-direct click),2.2143,17575
-Display,GA report (last non-direct click),9.0812,3283
+Display,GA report (last non-direct click),3.8729,3282
 Affiliates,GA report (last non-direct click),0.0051,10549
 Paid Search,Last touch,1.5555,17575
-Display,Last touch,2.8932,3283
+Display,Last touch,2.8941,3282
 Affiliates,Last touch,0.0009,10549
 Paid Search,First touch,2.0781,17575
-Display,First touch,2.9589,3283
+Display,First touch,2.9598,3282
 Affiliates,First touch,0.0051,10549
 Paid Search,Linear,1.775,17575
-Display,Linear,2.8493,3283
+Display,Linear,2.8402,3282
 Affiliates,Linear,0.0042,10549
 Paid Search,Position-based,1.8073,17575
-Display,Position-based,2.9008,3283
+Display,Position-based,2.8996,3282
 Affiliates,Position-based,0.0037,10549
-Paid Search,Markov (data-driven),2.0238,17575
-Display,Markov (data-driven),3.3067,3283
-Affiliates,Markov (data-driven),0.2819,10549
-Paid Search,"Markov, conservative relabel",2.4621,17575
-Display,"Markov, conservative relabel",8.1537,3283
-Affiliates,"Markov, conservative relabel",0.073,10549
+Paid Search,Markov (data-driven),2.0091,17575
+Display,Markov (data-driven),3.2829,3282
+Affiliates,Markov (data-driven),0.268,10549
+Paid Search,"Markov, conservative relabel",2.4269,17575
+Display,"Markov, conservative relabel",3.8012,3282
+Affiliates,"Markov, conservative relabel",0.0729,10549

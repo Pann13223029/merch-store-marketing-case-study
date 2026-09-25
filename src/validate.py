@@ -1,12 +1,14 @@
-"""Validation checks for the clean session table (sql/process/01_sessions_clean.sql).
+"""Validation checks for the clean session table (sql/process/01_sessions_clean.sql), plus a check that
+no single visitor decides a channel's numbers.
 
-Each check compares the cleaned extract against totals measured on the raw BigQuery
+Each session check compares the cleaned extract against totals measured on the raw BigQuery
 tables during Prepare (reports/02_prepare.md), so cleaning can't silently drop or
 double-count sessions, purchases or revenue.
 """
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 # Totals measured directly on the raw tables in Prepare.
@@ -81,3 +83,34 @@ def validate_sessions(df: pd.DataFrame) -> pd.DataFrame:
     check("Purchase sessions without revenue stay negligible (< 60)", no_rev < 60, f"{no_rev} sessions")
 
     return pd.DataFrame(rows)
+
+
+def visitor_concentration(purchases: pd.DataFrame, channel_col: str, revenue_col: str = "revenue_usd",
+                          visitor_col: str = "full_visitor_id", threshold: float = 0.20,
+                          top_n: int = 5) -> pd.DataFrame:
+    """How much of each channel's revenue its largest buyers hold.
+
+    `purchases` has one row per purchase session, labelled with a channel in `channel_col`. Returns one row
+    per channel, largest revenue first: purchases, buyers, revenue, top_visitor and top_share (the largest
+    buyer and their share of the channel's revenue), top_n_share (the `top_n` largest buyers together), and
+    flagged: every visitor holding more than `threshold` of the channel's revenue, largest first (empty when
+    none). A flagged visitor can decide a channel's numbers alone, so look at them before judging the channel.
+    A channel without revenue gets NaN shares and no flags.
+    """
+    per_visitor = purchases.groupby([channel_col, visitor_col], observed=True)[revenue_col].sum()
+    rows = {}
+    for channel, revenue in per_visitor.groupby(level=0, sort=False):
+        revenue = revenue.droplevel(0).sort_values(ascending=False, kind="stable")
+        total = revenue.sum()
+        share = revenue / total if total > 0 else revenue * np.nan
+        rows[channel] = {
+            "purchases": int((purchases[channel_col] == channel).sum()),
+            "buyers": len(revenue),
+            "revenue": total,
+            "top_visitor": revenue.index[0],
+            "top_share": share.iloc[0],
+            "top_n_share": share.iloc[:top_n].sum() if total > 0 else np.nan,
+            "flagged": share.index[share > threshold].tolist(),
+        }
+    out = pd.DataFrame.from_dict(rows, orient="index")
+    return out.rename_axis(channel_col).sort_values("revenue", ascending=False, kind="stable")
