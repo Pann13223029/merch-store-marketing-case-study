@@ -9,7 +9,7 @@ The deliverable is a **budget recommendation**, not a model. Every analysis belo
 
 | Decision | Question it answers | Output |
 |---|---|---|
-| **D1 — Channel budget** | Which channels are over- or under-credited by last-click reporting? | Channel credit under 5 attribution models → % budget shift per channel, under stated cost assumptions |
+| **D1 — Channel budget** | Which channels are over- or under-credited by last-click reporting? | Channel credit under 5 attribution models → % budget shift per channel, under stated cost assumptions (replaced by test designs; see the note under the success criteria) |
 | **D2 — Remarketing audience** | Which first-time visitors are worth paying to bring back? | Audit of Google's own lab model for this question → corrected propensity model → break-even cutoff → audience size and expected revenue |
 
 ## Stakeholders
@@ -43,7 +43,7 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 
 | # | Hypothesis | Test |
 |---|---|---|
-| H1 | Return-visit purchase rate differs by first-visit channel | Chi-square test of independence (+ Cramér's V for effect size) |
+| H1 | Return-visit purchase rate differs by first-visit channel | Chi-square test of independence (+ Cramér's V for effect size; relative risks reported instead, see the decision log) |
 | H2 | Last-click reporting under-credits channels that start journeys (e.g. Organic Search, Social) relative to data-driven attribution | Markov removal-effect credit vs last-click credit, with bootstrap 95% CIs |
 | H3 | First visits with product-level engagement (product view / add-to-cart) are more likely to lead to a later purchase | Two-proportion z-test; logistic regression coefficient with odds ratio |
 | H4 | The lab model's ROC-AUC is lower on external visitors than on all visitors, because part of its skill is recognizing internal traffic | Same model and eval set, scored with and without internal visitors; bootstrap 95% CI of the AUC difference |
@@ -54,6 +54,8 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 - **D2:** Model beats the simple-rule baseline on **PR-AUC** (the right metric at < 1% positives) and **top-decile lift**; break-even cutoff reported with the audience size and expected revenue it captures.
 - **D2 audit:** Lab model replicated (ROC-AUC within ±0.02 of the published 0.91), then compared with the corrected model on the same external-only test split.
 - **Overall:** A non-technical reader can act on the executive summary without reading the notebooks.
+
+**Note, added after Analyze:** the D1 criterion's "% shift" isn't delivered. The data has no ad costs, and credited revenue isn't incremental: attribution shows which channels were on the path to a sale, not what extra spend would buy. A shift computed from credit could move money toward channels that didn't cause the sales. The project replaces it with test designs that would measure what the channels cause ([notebook 06](../notebooks/06_test_design.ipynb); Analyze, Part D).
 
 ## First look at the data (sanity check, 2026-09-24)
 
@@ -76,7 +78,7 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 | Social | 226,117 | 0.05% | $8,397 |
 | Affiliates | 16,403 | 0.05% | $654 |
 
-**Open questions this raises for Prepare:** Referral converts at 4× the site average. Is that internal traffic from Google employees rather than marketing? Social brings 25% of sessions but almost no buyers. Is that YouTube traffic with a different purpose? Display earns $911 per order. Are those bulk/corporate orders?
+**Open questions this raises for Prepare:** Referral converts at 4× the site average. Is that internal traffic from Google employees rather than marketing? Social brings 25% of sessions but almost no buyers. Is that YouTube traffic with a different purpose? Display earns $911 per purchase session. Are those bulk/corporate orders?
 
 ## Known limitations and assumptions
 
@@ -103,3 +105,5 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 | 2026-09-25 | **Correction:** D2 overlaps with Google's GSP229 lab (`will_buy_on_return_visit`), contrary to the original plan. The planned "end-of-session leakage" critique was also wrong, because the lab's features are available after the first visit | Verified against the lab text; stated from memory at first |
 | 2026-09-25 | Reposition D2 as **audit and fix the lab**: replicate it, show that 53% of its training positives are likely employees, test the effect on AUC (H4), rebuild external-only with a 30-day window and PR-AUC | Turns the overlap into a critique that can be checked, rather than a lookalike |
 | 2026-09-25 | **Correction:** the lab trains on `data-to-insights.ecommerce.web_analytics`, not the public sample. The audit was re-based on that table, where referrers are unredacted: **61%** of training positives are verified employees (the 53% was a public-sample estimate) | Checked against the lab's SQL and the table itself (reports/04_analyze.md, Part A) |
+| 2026-09-25 | **Deviation from the plan:** H1's effect size is reported as relative risks, not Cramér's V. The switch was made after the test was run | With a 0.3% outcome, V stays near zero (0.05) even though the channels' rates differ by up to 270× (Analyze, Part B), so V doesn't describe the effect |
+| 2026-09-25 | **Change of deliverable:** D1's "% budget shift per channel" is dropped and replaced by test designs (notebook 06) | There's no cost data, and credited revenue isn't incremental, so a shift computed from it would rest on numbers that don't measure what extra spend buys |

@@ -35,7 +35,7 @@ Flagged at the **visitor level** (decision D-P1):
 | Internal (likely employees) | 37,332 (5.2%) | 76,536 (8.5%) | 5,408 (**47%**) | 7.07% | $730,377 (**41%**) |
 | External | 676,835 | 827,117 | 6,144 | 0.74% | $1,049,773 |
 
-Flagging whole visitors (not just the entry session) also removes **3,023 Direct sessions** from employees who later returned by bookmark. Session-level flagging would have left those inflating the Direct channel.
+Flagging whole visitors (not just the entry session) also removes **3,023 Direct sessions** of flagged employees. Most of them (2,798) came *before* the visitor's first visit through the internal link, and 225 came after it, as returns by bookmark or typed URL. Session-level flagging would have left all of them inflating the Direct channel. Flagging a visit by what the visitor did later uses hindsight: fine for reporting on the past, but a live campaign can't see it when it scores a first visit (Analyze, Part B, §8).
 
 *Other redacted-referral paths* (`/offer/2145`, `/pagead/ads`, `/cm/CampaignMgmt`…; 1,697 sessions, $2.5k revenue) turned out, in the lab's unredacted table, to be Google-internal too: the employee deals site `gdeals.googleplex.com`, ad-preview tools, and corp dashboards. They stay as `Referral` because they're too small to change any conclusion. All employee traffic the flag misses together is about 1.5% of the purchases treated as external (Analyze, Part A).
 
@@ -43,7 +43,7 @@ Flagging whole visitors (not just the entry session) also removes **3,023 Direct
 
 Monthly sessions range from 62k to 114k. The share of sessions with an Enhanced Ecommerce product-view hit stays between 8.9% and 19.1% every month, so **product-level tracking works for the full year**. Two things to handle:
 - **2017-08 is a single day** (2,556 sessions). It will be excluded from monthly trends.
-- **Oct–Nov 2016 has a traffic spike** (98k and 114k sessions) with *lower* conversion (0.89%, 0.81%) and less product browsing. It looks like a low-intent traffic campaign; we'll investigate in Analyze.
+- **Oct–Nov 2016 has a traffic spike** (98k and 114k sessions) with *lower* conversion (0.89%, 0.81%) and less product browsing. It looks like a low-intent traffic campaign, to investigate in Analyze (it turned out to be YouTube; Part C).
 
 ### 3. Field completeness
 
@@ -60,9 +60,11 @@ Monthly sessions range from 62k to 114k. The share of sessions with an Enhanced 
 
 All 898 `(fullVisitorId, visitId)` pairs appear exactly twice, with **two different start times one day apart**. These are sessions that crossed midnight, which GA splits into two sessions. **Unique key = `(fullVisitorId, visitId, visitStartTime)`**. Both rows stay, matching how GA counts sessions.
 
-### 5. A few very large orders dominate some channels' revenue
+### 5. A few very large purchase sessions dominate some channels' revenue
 
-| Channel | Purchases | Median order | 99th pct order | Max order | Revenue share from orders > $5k |
+Revenue here is per purchase session, all traffic, as GA labels it. A session can hold several transactions.
+
+| Channel | Purchase sessions | Median | 99th percentile | Max | Revenue share from purchase sessions > $5k |
 |---|---:|---:|---:|---:|---:|
 | Referral | 5,322 | $62 | $1,182 | $8,258 | 4.7% |
 | Organic Search | 3,443 | $44 | $1,015 | $9,228 | 5.8% |
@@ -70,7 +72,7 @@ All 898 `(fullVisitorId, visitId)` pairs appear exactly twice, with **two differ
 | Paid Search | 469 | $45 | $798 | $1,526 | 0.0% |
 | **Display** | 143 | $85 | $32,154 | **$47,082** | **72.7%** |
 
-**73% of Display's revenue comes from a handful of orders over $5k** (likely bulk or corporate). Revenue-based attribution would reward Display for a few unusual orders. This needs a decision in Process (D-P2).
+**73% of Display's revenue comes from a handful of purchase sessions over $5k** (likely bulk or corporate). Revenue-based attribution would reward Display for a few unusual purchases. This needs a decision in Process (D-P2). Analyze (Part C) found who made them: Display's four purchase sessions over $5k, including the $47,082 maximum and the $32,154 at its 99th percentile, all belong to one outside corporate buyer, reported from then on as its own segment (the key account).
 
 ### 6. Purchase timing supports 30-day windows
 
@@ -80,7 +82,7 @@ External visitors first seen in the window who bought (n = 5,047):
 |---|---:|---:|---:|---:|---:|---:|
 | Cumulative % | 57.3% | 85.6% | 90.2% | **95.1%** | 97.8% | 99.0% |
 
-A **30-day window captures 95% of purchases** and matches GA's default attribution lookback.
+A **30-day window captures 95% of these first purchases** (counting those made on the first visit) and matches GA's default attribution lookback. For purchases made on a *later* visit, which the remarketing label targets, it captures 88.6% (1,908 of 2,154; finding 7).
 
 ### 7. Corrected sizing for the remarketing model (D2)
 
@@ -92,7 +94,7 @@ The D2 population is first-visit non-buyers (about 665,700), and the target is a
 
 ## Licensing, privacy, security
 
-- Google publishes the data as a BigQuery public dataset for learning and demonstration. We query it in place, and only aggregates and derived extracts are stored locally.
+- Google publishes the data as a BigQuery public dataset for learning and demonstration. I query it in place, and only aggregates and derived extracts are stored locally.
 - It contains no PII. Visitor IDs are hashed and cities are partly redacted by Google.
 - Local extracts are gitignored, except three small results that are slow to recreate: the BigQuery ML evaluation and predictions (`data/raw/a11_*`, `a13_*`) and the tuning results (`data/processed/tuning_results.json`). The predictions keep Google's hashed visitor and session IDs, the same ones anyone can query in the public tables. Credentials live in the gcloud config, outside the repo.
 
@@ -104,4 +106,4 @@ The D2 population is first-visit non-buyers (about 665,700), and the target is a
 | D-P1a | Internal rule = `channelGrouping = 'Referral' AND source = '(direct)' AND referralPath = '/'` | Covers 97.5% of redacted-referral sessions, with 65.8% from Google office cities. The remaining paths are too small to matter. Later verified against unredacted referrers: 99.2% precision, 98.2% of employee purchases caught (D-A1) |
 | D-P1b | Session key = `(fullVisitorId, visitId, visitStartTime)` | The 898 "duplicates" are midnight-split sessions, not errors |
 | D-P1c | `timeOnSite` NULL → 0; city not used; channel-level (not campaign-level) analysis | See completeness table |
-| D-P2 | Attribution credit is measured in **conversions first** (each purchase = 1). Revenue credit is shown second, with each order **capped at the 99th percentile**. Bulk orders are reported separately as a "corporate demand" finding | Conversions can't be skewed by a few $30k+ orders. Capping keeps revenue visible without letting outliers drive budget advice |
+| D-P2 | Attribution credit is measured in **conversions first** (each purchase = 1). Revenue credit is shown second, with each purchase session **capped at the 99th percentile** ($1,606, set in Process). Bulk purchase sessions are reported separately | Conversions can't be skewed by a few $30k+ purchase sessions. Capping keeps revenue visible without letting outliers drive budget advice |

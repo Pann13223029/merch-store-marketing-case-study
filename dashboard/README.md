@@ -6,10 +6,10 @@ An interactive companion to the case study for the Head of Marketing. The data i
 
 | File | Rows | What it holds |
 |---|---:|---|
-| `monthly_channel.csv` | 175 | Sessions, purchases, and revenue (raw and capped) by month, channel (GA's label), and segment (External / Internal (Google employees)) |
-| `channel_profile.csv` | 8 | External traffic by channel: sessions, visitors, purchases, conversion rate, revenue |
-| `attribution_credit.csv` | 48 | Share of purchases and revenue credited to each channel under six attribution models, with 95% bootstrap intervals |
-| `value_per_click.csv` | 21 | Revenue credited per actual visit for Paid Search, Display, and Affiliates under seven attribution rules |
+| `monthly_channel.csv` | 189 | Sessions, purchases, and revenue (raw and capped) by month, channel (GA's label), and segment (External / Internal (Google employees) / Key account) |
+| `channel_profile.csv` | 8 | External traffic by channel, without the key account: sessions, visitors, purchases, conversion rate, revenue |
+| `attribution_credit.csv` | 48 | Share of purchases and revenue credited to each channel under six attribution models, with 95% bootstrap intervals that resample visitors |
+| `value_per_click.csv` | 21 | Attributed value per click: capped revenue credited per actual visit for Paid Search, Display, and Affiliates under seven attribution rules |
 | `retargeting_bands.csv` | 7 | First-time visitors by model score band in the test months: buy rate and 30-day revenue per visitor (95% CI) |
 
 ## 1. Add the data sources
@@ -34,7 +34,7 @@ For each CSV file: open [lookerstudio.google.com](https://lookerstudio.google.co
 
 | Element | Data source | Settings |
 |---|---|---|
-| **Drop-down control** | monthly_channel | Control field `segment`; default **External** |
+| **Drop-down control** | monthly_channel | Control field `segment` (External, Internal (Google employees), Key account); default **External** |
 | **Scorecards** (four) | monthly_channel | `sessions`, `purchases`, `revenue_capped_usd`, and the calculated field below |
 | **Time series** | monthly_channel | Dimension `month`; breakdown `channel`; metric `purchases` |
 | **Time series** | monthly_channel | Dimension `month`; breakdown `channel`; metric `sessions`. It shows the YouTube (Social) spike in Oct–Nov 2016 |
@@ -44,7 +44,9 @@ Calculated field in monthly_channel, **Employee share of revenue**:
 ```
 SUM(CASE WHEN segment = "Internal (Google employees)" THEN revenue_usd ELSE 0 END) / SUM(revenue_usd)
 ```
-This scorecard should read **41%**. Put it on the page with a text box: *"Excluded from every marketing figure: Google employees reach the store through an internal link."*
+This scorecard needs every segment, so **keep it outside the drop-down's scope**. By default a control filters every chart on the page that uses its data source, and with the default **External** this scorecard would read 0%. Select the drop-down, the other three scorecards and the two time series, then **right-click → Group**: a control in a group filters only the charts in that group. Leave the employee-share scorecard out of the group. It should read **41%**; if it reads 0%, the drop-down still reaches it.
+
+Put it on the page with a text box: *"Excluded from every marketing figure: Google employees, who reach the store through an internal link (41% of revenue), and one corporate key account (7% of revenue in this file), reported as its own segment."*
 
 ## 4. Page 2: Channel credit
 
@@ -55,7 +57,7 @@ This scorecard should read **41%**. Put it on the page with a text box: *"Exclud
 | **Table** | attribution_credit | `channel`, `model`, `purchase_share`, `purchase_share_ci_low`, `purchase_share_ci_high`, `revenue_share` |
 | **Bar chart** | value_per_click | Dimension `model`; metric `value_per_click_usd`; a drop-down control on `channel` (default **Paid Search**) |
 
-Text box: *"GA's report credits a visitor's earlier campaign when they come back by bookmark. That's why it gives Organic Search 54% of purchases, where the data-driven model gives 38%."*
+Text box: *"GA's report credits a visitor's earlier campaign when they come back by bookmark. That's why it gives Organic Search 54% of purchases, where the data-driven model gives 38% if every such return was self-initiated. The over-credit is likely up to about 15 points."*
 
 ## 5. Page 3: Retargeting break-even (interactive)
 
@@ -83,7 +85,7 @@ With the defaults, the table should match the report: the top 1% is worth **$0.7
 
 ## 6. Share it
 
-**Share → Manage access → Anyone with the link can view.** Then paste the link into the main [README](../README.md) under *Share*.
+**Share → Manage access → Anyone with the link can view.** Then add the link to the main [README](../README.md) under *Share*.
 
 ## Refreshing the data
 
