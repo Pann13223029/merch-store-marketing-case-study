@@ -27,6 +27,8 @@ There's no "move X% of budget to channel Y" here, on purpose. The data has no ad
 
 → **The one-page memo I'd hand the Head of Marketing:** [reports/00_executive_summary.md](reports/00_executive_summary.md)
 
+→ **The 14-slide deck I'd present to them:** [reports/slides.pdf](reports/slides.pdf)
+
 ---
 
 ## What I found
@@ -177,6 +179,7 @@ The business task, stakeholders, 8 guiding questions, 4 hypotheses with pre-spec
 
 ### Share
 - **Executive summary** for the Head of Marketing: [reports/00_executive_summary.md](reports/00_executive_summary.md)
+- **Slide deck:** 14 slides for presenting the findings, with the lab audit and methods as an appendix: [reports/slides.pdf](reports/slides.pdf)
 - **Charts:** [reports/figures/](reports/figures/). Chart colors come from a validated palette, checked for color-blind separation.
 - **Looker Studio dashboard:** a step-by-step build guide and its data in [dashboard/](dashboard/) (overview, channel credit, and an interactive break-even page with lift, margin, and cost controls).
 - **Kaggle notebook:** a runnable, condensed version, [kaggle/merch_store_marketing_case_study.ipynb](kaggle/merch_store_marketing_case_study.ipynb), with publishing steps in [kaggle/](kaggle/).
@@ -206,7 +209,7 @@ Then run `notebooks/01` → `06` in order.
 ```
 
 ```
-├── reports/     executive summary, phase write-ups (01_ask … 04_analyze), figures/
+├── reports/     executive summary, slide deck, phase write-ups (01_ask … 04_analyze), figures/
 ├── notebooks/   01_prepare … 06_test_design
 ├── sql/         prepare/ · process/ · audit/ (incl. the lab's BigQuery ML models)
 ├── src/         bq · validate · tables · segments · journeys · lab_audit · modeling · breakeven · attribution · power · viz · dashboard
@@ -227,4 +230,4 @@ Then run `notebooks/01` → `06` in order.
 
 **Data:** Google Analytics 360 sample dataset (`bigquery-public-data.google_analytics_sample`) and the `data-to-insights.ecommerce.web_analytics` table used in Google's training labs, both published by Google for learning. **Code and write-ups:** [MIT license](LICENSE).
 
-**Banner photo:** Adeniji Abdullahi A on [Pexels](https://www.pexels.com/photo/a-happy-man-looking-at-a-cellphone-10843136/) (free Pexels license), background removed.
+**Banner and deck cover photo:** Adeniji Abdullahi A on [Pexels](https://www.pexels.com/photo/a-happy-man-looking-at-a-cellphone-10843136/) (free Pexels license), background removed.
