@@ -16,12 +16,6 @@ from src.tables import TRAIN_END, WINDOW_DAYS
 
 FOLD_IDS = [f"fold{k}" for k in range(1, len(CV_FOLDS) + 1)]
 
-# On the real data 3,254 of fold 3's training rows (15 buyers) have label windows reaching 2017-03-01/02,
-# but no label was set by a purchase on those days, so the tuning results don't change.
-FOLD_3_EMBARGO_BUG = pytest.mark.xfail(reason=(
-    "fold 3's embargo (February 2017) is 28 days, shorter than the 30-day label window: labels of training "
-    "first visits on 2017-01-30/31 look into 2017-03-01/02, inside the validation months"))
-
 
 def remarketing_frame(n: int = 1500, seed: int = 0) -> pd.DataFrame:
     """Synthetic remarketing table, first visits 2016-08-01 .. 2017-07-01; adding to cart predicts buying."""
@@ -69,11 +63,7 @@ def test_folds_expand_the_training_window():
     assert ends == sorted(ends)
 
 
-@pytest.mark.parametrize("train, valid", [
-    pytest.param(*CV_FOLDS[0], id="fold1"),
-    pytest.param(*CV_FOLDS[1], id="fold2"),
-    pytest.param(*CV_FOLDS[2], id="fold3", marks=FOLD_3_EMBARGO_BUG),
-])
+@pytest.mark.parametrize("train, valid", CV_FOLDS, ids=FOLD_IDS)
 def test_embargo_covers_the_30_day_label_window(train, valid):
     # A first visit late on the last training day may buy until 30 days after it starts, so training labels
     # are only closed at the end of train_end + 30 days; validation has to start after that.

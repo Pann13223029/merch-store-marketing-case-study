@@ -21,7 +21,7 @@ It's also my capstone for the Google Data Analytics certificate, with a twist. M
 | The Head of Marketing asks | My answer | How sure |
 |---|---|---|
 | **Which channels deserve the budget?** | Don't move money on GA's channel report: it likely gives Organic Search up to about 15 points of purchase credit that visitors returning on their own earned. Keep Paid Search, but bid below what a click can be worth ($0.78–$1.21 at most). Hold Display's budget until a test shows what it adds. | **Moderate** on Organic Search: the direction holds under every reading, but the size rests on an assumption. **Low** on what Paid Search and Display cause, which only a test can show |
-| **Which first-time visitors are worth bringing back?** | Only the top-scored ones. A model's top 10% holds 72% of later buyers, but retargeting them is worth only about $710–$740 a month before ad costs. Measure the real lift with a 50/50 test. | **High** for the ranking. **Low** for the lift, which is borrowed from other companies' experiments |
+| **Which first-time visitors are worth bringing back?** | Only the top-scored ones. A model's top 10% holds 71% of later buyers, but retargeting them is worth only about $700–$760 a month before ad costs. Measure the real lift with a 50/50 test. | **High** for the ranking. **Low** for the lift, which is borrowed from other companies' experiments |
 
 There's no "move X% of budget to channel Y" here, on purpose. The data has no ad costs, and getting credit for a sale isn't the same as causing it, so moving money by credit could fund channels that didn't cause the sales. I sized the tests that would settle it instead ([notebook 06](notebooks/06_test_design.ipynb)).
 
@@ -97,18 +97,18 @@ Every attribution rule I tested credits a Paid Search click with $1.56–$2.43 o
 
 ### 6. A model can find tomorrow's buyers, but they're worth less than you'd hope
 
-Scored at their first visit, the top 10% of first-time visitors held 72% of the outside customers who bought within the next 30 days. A two-line rule (North American visitors first, then how far they got toward checkout) reached 61%, so the model's edge is real but modest. And the money is small: retargeting the top 10% is worth about $710–$740 a month in extra gross profit, before ad costs.
+Scored at their first visit, the top 10% of first-time visitors held 71% of the outside customers who bought within the next 30 days. A two-line rule (North American visitors first, then how far they got toward checkout) reached 61%, so the model's edge is real but modest. And the money is small: retargeting the top 10% is worth about $700–$760 a month in extra gross profit, before ad costs.
 
 ![Cumulative gains](reports/figures/d2_gains_chart.png)
 
-*The chart shows the population as first reported (70% vs 61%). Scored without hindsight about who is an employee, the model reaches 72% of real later buyers.*
+*The chart shows the population as first reported (68% vs 61%). Scored without hindsight about who is an employee, the model reaches 71% of real later buyers.*
 
 <details>
 <summary>The numbers</summary>
 
-- 72% has a 95% CI of 67–77%. The model was trained only on outside visitors, with a 30-day window, and tested once on months it never saw (May–Jun 2017).
-- About 1 in 5 of the later buyers the top 10% reaches are Google employees whom only a later visit reveals, so they count as reach, not value.
-- The top 20% is worth about $1,025 a month. PR-AUC is 0.061, against 0.028 for a funnel rule and 0.049 for the two-line rule.
+- 71% has a 95% CI of 65–75%. The model was trained only on outside visitors, with a 30-day window, and tested once on months it never saw (May–Jun 2017).
+- Nearly 1 in 4 of the later buyers the top 10% reaches are Google employees whom only a later visit reveals, so they count as reach, not value.
+- The top 20% is worth about $930–$960 a month. PR-AUC is 0.062, against 0.028 for a funnel rule and 0.049 for the two-line rule.
 
 </details>
 
@@ -122,7 +122,7 @@ Four things can start now, two need a test first, and two are worth exploring.
 | Now | Show a multi-touch view beside GA's channel report, with the Organic Search range | Head of Marketing, Finance | Up to ~15 points of purchase credit |
 | Now | Split brand from non-brand search, and keep bids under the value ceiling ($0.78–$1.21 at most) | Paid media | $1.56–$2.43 attributed per click |
 | Now | Review any spend on YouTube promotion and affiliates | Paid media | ~98,000 YouTube visits in Oct–Nov 2016, no purchases; 9 affiliate sales all year |
-| Test | Retarget only the top-scored first-time visitors, and measure the lift with a 50/50 holdout of the top 20% for 12 months | Retargeting lead | $710–$1,025 a month |
+| Test | Retarget only the top-scored first-time visitors, and measure the lift with a 50/50 holdout of the top 20% for 12 months | Retargeting lead | $700–$960 a month |
 | Test | Hold Display's budget and run a 12-week 50/50 holdout measured on site visits | Paid media | Display's ~$17k of revenue a year |
 | Explore | Retention: email and reminders for past visitors | Head of Marketing | 34% of purchases |
 | Explore | A direct sales path for corporate (bulk) buyers | Head of Marketing, Sales | $248,552 of bulk purchase sessions, half of it one account |
@@ -134,12 +134,13 @@ Some mistakes I caught along the way. Each one is recorded in the decision logs:
 - **An ID that looked unique wasn't.** The lab's `unique_session_id` repeats for visits split at midnight, and joining on it duplicated 1,666 rows. The join now uses a fingerprint of all grouping columns.
 - **A memoryless model over-credited Social.** A first-order Markov chain gave Social nearly 3× the purchases its journeys produced. A third-order chain fixed most of it, and Social and Affiliates stay out of the headlines.
 - **A revenue-splitting method I rejected** gave Paid Search less credit than last click. I replaced it with a value-weighted removal effect.
+- **A two-day overlap flipped my model choice.** One tuning fold left only February, 28 days, between training and validation, but each label looks 30 days ahead, so labels from Jan 30–31 could see into the validation months. Fixing it moved gradient boosting just past the random forest (0.0705 vs 0.0700). My rule, set before testing, takes the higher score, so I switched, even though the headline dipped from 72% to 71%.
 
 Then, before calling it done, I put the whole analysis through an AI-assisted red-team review: re-derive every headline from the data and hunt for claims the evidence doesn't support. It changed six conclusions:
 - **Display** was mostly one corporate buyer, so it's now reported on its own as the key account.
 - **Organic Search's over-credit** depends on how GA's direct-return flag is read, so it's now a range with moderate confidence. A check that had seemed to confirm it turned out to be an export-day artifact.
 - **"Direct"** mixed visitors returning on their own with first-ever visits, so returning visitors get 34% of purchases, not the half I first reported.
-- **The retargeting population** used later visits to leave out employees, which a live campaign can't see. Scored without that hindsight, the model still reaches 72% of real later buyers, and employees are 22% of the buyers it reaches.
+- **The retargeting population** used later visits to leave out employees, which a live campaign can't see. Scored without that hindsight, the model still reaches 71% of real later buyers, and employees are 23% of the buyers it reaches.
 - **Both proposed tests** were too small to detect their effects, so notebook 06 sizes designs that can.
 - **Paid Search:** every purchase with a readable keyword was a brand search, so its value is now a ceiling, with scenarios for how many sales the ads caused.
 
@@ -173,9 +174,9 @@ The business task, stakeholders, 8 guiding questions, 4 hypotheses with pre-spec
 | Part | Notebook | Methods | Headline |
 |---|---|---|---|
 | **A. Audit of Google's lab (GSP229)** | [03](notebooks/03_analyze_lab_audit.ipynb) | Recreated the lab in **BigQuery ML** with its own SQL; unredacted ground truth; paired bootstrap; test with features removed to find the cause | H4 supported: employees inflate the published ROC-AUC by 0.047 (95% CI 0.035–0.059). On outside visitors the lab model scores 0.863, close to a version trained without employees (0.877) |
-| **B. Retargeting model (D2)** | [04](notebooks/04_analyze_remarketing.ipynb) | χ² test, z-tests, logistic regression with odds ratios; logistic regression, random forest, and gradient boosting tuned with **time-based folds and an embargo**; one test on unseen months against two no-model rules; Wilson intervals; calibration and permutation importance; a re-evaluation without hindsight; break-even analysis | PR-AUC 0.061 vs 0.028 (funnel rule) and 0.049 (two-line rule); 72% of real later buyers in the top 10% vs 61% for the two-line rule; the top 10% is worth about $710–$740 a month |
+| **B. Retargeting model (D2)** | [04](notebooks/04_analyze_remarketing.ipynb) | χ² test, z-tests, logistic regression with odds ratios; logistic regression, random forest, and gradient boosting tuned with **time-based folds and an embargo**; one test on unseen months against two no-model rules; Wilson intervals; calibration and permutation importance; a re-evaluation without hindsight; break-even analysis | PR-AUC 0.062 vs 0.028 (funnel rule) and 0.049 (two-line rule); 71% of real later buyers in the top 10% vs 61% for the two-line rule; the top 10% is worth about $700–$760 a month |
 | **C. Attribution (D1)** | [05](notebooks/05_analyze_attribution.ipynb) | Last-touch, first-touch, linear, and position-based models; a **third-order Markov chain** (order chosen by held-out likelihood) with a value-weighted removal effect; paired bootstrap that resamples visitors; a visitor-concentration check; an assumption dial with a benchmark; a Shapley decomposition | H2 holds against true last click but is reversed against GA's report. GA likely over-credits Organic Search by up to about 15 points; one key account held 89% of Display's reported revenue; a Paid Search click's value is a ceiling ($1.56–$2.43) |
-| **D. Test design** | [06](notebooks/06_test_design.ipynb) | Power and minimum detectable effect for two-sample tests; Poisson power with variance inflation for weekly counts | A 50/50 holdout of the top 20% for 12 months detects a 14% purchase lift (a 10/90 split has 24% power at +10% after a year). A purchase-based Display holdout has 5–6% power, so Display is tested on site visits |
+| **D. Test design** | [06](notebooks/06_test_design.ipynb) | Power and minimum detectable effect for two-sample tests; Poisson power with variance inflation for weekly counts | A 50/50 holdout of the top 20% for 12 months detects a 14% purchase lift (a 10/90 split has 23% power at +10% after a year). A purchase-based Display holdout has 5–6% power, so Display is tested on site visits |
 
 ### Share
 - **Executive summary** for the Head of Marketing: [reports/00_executive_summary.md](reports/00_executive_summary.md)
@@ -226,7 +227,7 @@ Then run `notebooks/01` → `06` in order.
 - **The key-account exclusion is a judgment.** It's documented (Analyze, Part C, decision D-C5), and the account is reported as its own segment rather than dropped.
 - **Data gaps.** There's no ad-cost data, visitors are identified per device, and the data is 2016–17 Universal Analytics. The methods carry over to GA4's BigQuery export.
 - **Margin.** The 50% gross margin is applied to revenue that includes tax and shipping, which overstates gross profit somewhat.
-- **Privacy.** The data is anonymized by Google. Recommendations assume retargeting reaches only visitors who consented. The retargeting audience is 91% North American because that's where buyers are, and the report says so openly.
+- **Privacy.** The data is anonymized by Google. Recommendations assume retargeting reaches only visitors who consented. The retargeting audience is 98% North American because that's where buyers are, and the report says so openly.
 
 **Data:** Google Analytics 360 sample dataset (`bigquery-public-data.google_analytics_sample`) and the `data-to-insights.ecommerce.web_analytics` table used in Google's training labs, both published by Google for learning. **Code and write-ups:** [MIT license](LICENSE).
 

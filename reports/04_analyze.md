@@ -151,15 +151,15 @@ Notebook: [notebooks/04_analyze_remarketing.ipynb](../notebooks/04_analyze_remar
 |---|---|
 | **H1 supported:** the first visit's channel predicts a later purchase | χ² = 1,406, df = 6, p < 0.001. Paid Search 1.16% and Display 2.03% vs Social 0.008% (about 150–270×) |
 | **H3 supported in part:** adding to cart matters; viewing a product has no clear independent effect once engagement is controlled | Add-to-cart odds ratio **3.7** (95% CI 3.2–4.3); product view 1.16 (95% CI 0.995–1.36). North America **15.7**, mobile 0.36 |
-| The model **clearly beats the funnel rule** (the Ask-phase success criterion) | PR-AUC **0.061 vs 0.028** (+0.032, 95% CI +0.019 to +0.048); top-decile lift **7.0× vs 5.4×** |
-| **A two-line rule gets most of the way** | North American first visits first, then funnel step: PR-AUC 0.049, 61.3% of later buyers in its top 10%. Forest edge: top-10% share +8.7 pts (+4.4 to +13.5); PR-AUC +0.011 (−0.002 to +0.025), not significant |
-| It only **slightly beats the lab's features refit on corrected data** | PR-AUC +0.005 (not significant); top-10% share +5.0 pts (+1.2 to +8.5). **Fixing the data mattered more than the model** |
-| **The top 10% of first visits hold 70.0% of later buyers** (95% CI 64.8–74.7%); none are in the bottom 40% (at most 1.2%) | The two-line rule's bottom 40% is also empty |
-| **Without hindsight: 72.1% of real later buyers** | The whole-year employee flag hid 544 test-month first-time visitors (83 later buyers). Scoring them anyway, as a live campaign must: 233 of 323 real buyers in the top 10% (67.0–76.7%) vs 60.7% for the two-line rule; staff are 22% of the buyers reached |
-| Results are **robust** | Embargoed training 0.058; without missed employees 0.061; well calibrated (predicted 0.34% vs observed 0.35%) |
-| **Retargeting is worth little beyond the top 20%** | Max affordable cost per visitor: top 1% **$0.70**, 1–2% $0.18, 2–5% $0.11, 5–20% $0.07, below that < $0.01 |
-| **The prize is modest** | Top 10% (about 4,600 visitors/month) ≈ **$709/month** ($738 with staff at zero lift); top 20% ≈ $1,025. Across the assumptions, $213–$1,985 and $308–$2,871 |
-| **The lift can be measured, but only with a 50/50 holdout** | Part D: the top 20% for 12 months detects a lift of 13.6% or more; a 10/90 split has at most 24% power at +10% within a year |
+| The model **clearly beats the funnel rule** (the Ask-phase success criterion) | PR-AUC **0.062 vs 0.028** (+0.034, 95% CI +0.019 to +0.052); top-decile lift **6.8× vs 5.4×** |
+| **A two-line rule gets most of the way** | North American first visits first, then funnel step: PR-AUC 0.049, 61.3% of later buyers in its top 10%. Model's edge: top-10% share +6.5 pts (+2.7 to +10.7); PR-AUC +0.013 (−0.002 to +0.029), not significant |
+| It **doesn't clearly beat the lab's features refit on corrected data** | PR-AUC +0.007 and top-10% share +2.8 pts (−0.6 to +6.4), neither significant. **Fixing the data mattered more than the model** |
+| **The top 10% of first visits hold 67.8% of later buyers** (95% CI 62.5–72.7%); 8 of 323 (2.5%) are in the bottom 40% | The two-line rule's bottom 40% is empty |
+| **Without hindsight: 70.6% of real later buyers** | The whole-year employee flag hid 544 test-month first-time visitors (83 later buyers). Scoring them anyway, as a live campaign must: 228 of 323 real buyers in the top 10% (65.4–75.3%) vs 60.7% for the two-line rule; staff are 23% of the buyers reached |
+| Results are **robust** | Embargoed training 0.062; without missed employees 0.063; well calibrated (predicted 0.34% vs observed 0.35%) |
+| **Retargeting is worth little beyond the top 20%** | Max affordable cost per visitor: top 1% **$0.61**, 1–2% $0.21, 2–5% $0.12, 5–10% $0.07, 10–20% $0.05, below that about $0.01 or less |
+| **The prize is modest** | Top 10% (about 4,600 visitors/month) ≈ **$703/month** ($757 with staff at zero lift); top 20% ≈ $933 ($964). Across the assumptions, $211–$1,968 and $280–$2,612 |
+| **The lift can be measured, but only with a 50/50 holdout** | Part D: the top 20% for 12 months detects a lift of 13.8% or more; a 10/90 split has at most 23% power at +10% within a year |
 
 ### 1. Hypotheses (training months only)
 
@@ -203,20 +203,20 @@ A multivariable logistic regression (522,576 first visits, McFadden pseudo-R² 0
 
 ### 2. Model development
 
-- **Validation:** three expanding-window folds inside the training months. Each skips a calendar month between training and validation (an embargo), because training labels look 30 days ahead. Fold 3's embargo is February, 28 days (see Limitations).
+- **Validation:** three expanding-window folds inside the training months. Each leaves at least 30 days between training and validation (an embargo), because training labels look 30 days ahead. February has only 28 days, so fold 3's training ends on Jan 29 (D-B8).
 - **Selection rule, fixed before testing:** the highest mean validation PR-AUC.
 - **Search:** 28 configurations. The first grid's best tree models sat at the grid's edge, so it was extended until the optima were interior.
 
 | Candidate | Best settings | Validation PR-AUC | Per fold |
 |---|---|---:|---|
-| **Random forest** (chosen) | 300 trees, min leaf 10, √features | **0.0706** | 0.060 / 0.066 / 0.086 |
-| Gradient boosting | lr 0.02, 4-leaf trees, min leaf 1,000, 300 rounds | 0.0701 | 0.059 / 0.068 / 0.083 |
-| Logistic regression | L2, C = 0.01, log counts + one-hot | 0.0673 | 0.060 / 0.065 / 0.077 |
-| *Baseline: lab's features, refit* | GSP229 features, unregularized logistic | *0.0560* | |
+| **Gradient boosting** (chosen) | lr 0.02, 4-leaf trees, min leaf 1,000, 300 rounds | **0.0705** | 0.059 / 0.068 / 0.084 |
+| Random forest | 300 trees, min leaf 10, √features | 0.0700 | 0.060 / 0.066 / 0.084 |
+| Logistic regression | L2, C = 0.01, log counts + one-hot | 0.0676 | 0.060 / 0.065 / 0.078 |
+| *Baseline: lab's features, refit* | GSP229 features, unregularized logistic | *0.0562* | |
 | *Baseline: two-line rule* | North American first visits first, then furthest funnel step, then pageviews | *0.0467* | |
 | *Baseline: funnel rule* | Furthest funnel step, then pageviews | *0.0277* | |
 
-Boosting improves as trees get *smaller* down to 4 leaves, while 2-leaf stumps are worse. The signal is **mostly additive with small interactions**, which is why logistic regression comes close. The random forest and boosting models are tied within fold noise. The rule picks the forest, and logistic regression is kept as the **explainer** (its odds ratios are in §1).
+Boosting improves as trees get *smaller* down to 4 leaves, while 2-leaf stumps are worse. The signal is **mostly additive with small interactions**, which is why logistic regression comes close. The boosting and random forest models are tied within fold noise (0.0705 vs 0.0700). The rule picks boosting, and logistic regression is kept as the **explainer** (its odds ratios are in §1). Before the fold-3 fix the forest led by a similar margin (0.0706 vs 0.0701; D-B8).
 
 ### 3. Test results (evaluated once)
 
@@ -227,37 +227,37 @@ Two baselines need no model at all. The **funnel rule** ranks first visits by th
 | Funnel rule | 0.028 (0.021–0.042) | 0.806 | 4.3% | 12.1× / 8.4× / 5.4× | 53.9% |
 | Two-line rule | 0.049 (0.037–0.070) | 0.880 | 7.4% | 21.1× / 9.5× / 6.1× | 61.3% |
 | Lab's features, refit | 0.055 (0.042–0.077) | 0.901 | 8.3% | 23.5× / 10.6× / 6.5× | 65.0% |
-| Gradient boosting | 0.062 (0.048–0.086) | 0.902 | 9.6% | 27.3× / 11.0× / 6.8× | 67.8% |
+| Random forest | 0.061 (0.047–0.082) | 0.912 | 9.6% | 27.3× / 10.8× / 7.0× | 70.0% |
 | Logistic regression | 0.063 (0.048–0.085) | 0.912 | 8.9% | 25.1× / 11.0× / 7.0× | 69.7% |
-| **Random forest (chosen)** | **0.061** (0.047–0.082) | 0.912 | 9.6% | 27.3× / 10.8× / **7.0×** | **70.0%** |
+| **Gradient boosting (chosen)** | **0.062** (0.048–0.086) | 0.902 | 9.6% | 27.3× / 11.0× / **6.8×** | **67.8%** |
 
-| Random forest minus… (paired bootstrap, same test visitors, 2,000 resamples) | PR-AUC (95% CI) | Share of later buyers in the top 10% (95% CI) |
+| Gradient boosting minus… (paired bootstrap, same test visitors, 2,000 resamples) | PR-AUC (95% CI) | Share of later buyers in the top 10% (95% CI) |
 |---|---|---|
-| Funnel rule | **+0.032** (+0.019 to +0.048) | **+16.1 pts** (+12.0 to +21.1) |
-| Two-line rule | +0.011 (−0.002 to +0.025): not significant | **+8.7 pts** (+4.4 to +13.5) |
-| Lab's features, refit | +0.005 (−0.008 to +0.018): not significant | **+5.0 pts** (+1.2 to +8.5) |
+| Funnel rule | **+0.034** (+0.019 to +0.052) | **+13.9 pts** (+9.5 to +19.4) |
+| Two-line rule | +0.013 (−0.002 to +0.029): not significant | **+6.5 pts** (+2.7 to +10.7) |
+| Lab's features, refit | +0.007 (−0.007 to +0.021): not significant | +2.8 pts (−0.6 to +6.4): not significant |
 
 ![Cumulative gains](figures/d2_gains_chart.png)
 
-The model clearly beats the funnel rule, so the Ask-phase criterion is met. **Against the two-line rule the edge is much smaller:** the rule's top 10% holds 61% of later buyers against the forest's 70%. That gap is significant; the PR-AUC gain isn't. Against the lab's features refit on corrected data the gain is small too (70% vs 65%). The three model families are tied on the test months, and the validation winner isn't the test winner, which is what noise looks like when the real differences are small. **The large gain came from correcting the population and the label** (Part A and Process). The model mainly adds a sharper top of the ranking.
+The model clearly beats the funnel rule, so the Ask-phase criterion is met. **Against the two-line rule the edge is much smaller:** the rule's top 10% holds 61% of later buyers against the model's 68%. That gap is significant; the PR-AUC gain isn't. Against the lab's features refit on corrected data neither gain is significant (68% vs 65%). The three model families are tied on the test months, and the validation winner isn't the test winner: logistic regression has the highest PR-AUC and the forest reaches the most later buyers. That's what noise looks like when the real differences are small. **The large gain came from correcting the population and the label** (Part A and Process). The model mainly adds a sharper top of the ranking.
 
 ### 4. Robustness
 
 | Check | Test PR-AUC | Lift, top 10% |
 |---|---:|---:|
-| Main result | 0.061 | 7.0× |
-| Trained only on first visits through 2017-03-31, so no training label overlaps the test months | 0.058 | 6.8× |
-| Without the 298 test visitors the lab's table identifies as employees the flag missed | 0.061 | 7.0× |
+| Main result | 0.062 | 6.8× |
+| Trained only on first visits through 2017-03-31, so no training label overlaps the test months | 0.062 | 6.9× |
+| Without the 298 test visitors the lab's table identifies as employees the flag missed | 0.063 | 6.8× |
 
-Calibration: mean predicted 0.34% vs observed 0.35% (Brier 0.0034). Predicted and observed rates agree by decile, and deciles 7–10 have no later buyers.
+Calibration: mean predicted 0.34% vs observed 0.35% (Brier 0.0034). Predicted and observed rates agree in the top deciles, where the audience is; deciles 7–10 hold 8 later buyers.
 
-**How precise are the headline shares?** 226 of the 323 later buyers (70.0%) rank in the top 10%, 95% Wilson interval 64.8–74.7%. None rank in the bottom 40%, so with 95% confidence at most 1.2% of later buyers (about 4) sit there. The empty bottom 40% isn't special to the model: the two-line rule also leaves no later buyer there (0.6 expected if its tied scores were ordered at random), while the funnel rule leaves 29 (9.0%).
+**How precise are the headline shares?** 219 of the 323 later buyers (67.8%) rank in the top 10%, 95% Wilson interval 62.5–72.7%. Eight (2.5%, 1.3–4.8%) rank in the bottom 40%. The two-line rule leaves none there (0.6 expected if its tied scores were ordered at random), and the funnel rule leaves 29 (9.0%).
 
 A bigger question is the employee flag itself, which uses hindsight. §8 re-runs the evaluation without it.
 
 ### 5. What drives the score
 
-Permutation importance (drop in test PR-AUC when an input is shuffled): **country 0.013, sub-continent 0.010**, furthest funnel step 0.007, **operating system 0.007**, add-to-cart 0.005, channel 0.004, device 0.003, time on site 0.003. Correlated engagement counts share credit, so each looks small alone.
+Permutation importance (drop in test PR-AUC when an input is shuffled): **country 0.044**, **furthest funnel step 0.029**, pageviews 0.012, **operating system 0.010**, channel 0.006, time on site 0.005, add-to-cart 0.005, browser 0.003. Sub-continent adds nothing once country is known (−0.001). Correlated engagement counts share credit, so each looks small alone.
 
 The operating-system signal is real. Within North America, Mac first visits come back to buy at 1.5% and Chrome OS at 1.2%, against 0.7% on Windows and 0.3–0.4% on phones. The employees the flag missed lean toward Macs but are only about 1% of buyers, too few to explain it.
 
@@ -265,10 +265,10 @@ The operating-system signal is real. Within North America, Mac first visits come
 
 | Top 10% by score vs all first-time visitors | Top 10% | All |
 |---|---:|---:|
-| Northern America | 91.1% | 41.9% |
-| Desktop | 81.5% | 61.8% |
-| Paid Search / Direct | 12.1% / 32.0% | 3.8% / 21.9% |
-| Social | 1.4% | 6.4% |
+| Northern America | 97.9% | 41.9% |
+| Desktop | 84.3% | 61.8% |
+| Paid Search / Direct | 11.7% / 32.9% | 3.8% / 21.9% |
+| Social | 0.3% | 6.4% |
 
 The audience follows purchase behavior: visitors outside North America almost never come back to buy, perhaps because of shipping or pricing, which the data can't show. In practice it's a **geographically narrow audience**, and the recommendation should say so openly. The low mobile share points to a mobile-experience question for the Act phase.
 
@@ -282,26 +282,26 @@ Revenue per visitor is **measured**: what each score band actually spent in the 
 
 | Score band | Visitors/month | 30-day buy rate | Revenue per visitor (95% CI) | Max affordable cost/visitor: central (range across lift 5–20%, margin 30–70%) |
 |---|---:|---:|---|---|
-| Top 1% | 456 | 9.6% | $14.07 ($8.93–$20.62) | **$0.70** ($0.21–$1.97) |
-| 1–2% | 456 | 3.6% | $3.59 ($1.68–$5.94) | $0.18 ($0.05–$0.50) |
-| 2–5% | 1,367 | 2.0% | $2.24 ($1.14–$3.78) | $0.11 ($0.03–$0.31) |
-| 5–10% | 2,278 | 1.1% | $1.35 ($0.71–$2.30) | $0.07 ($0.02–$0.19) |
-| 10–20% | 4,557 | 0.58% | $1.39 ($0.74–$2.17) | $0.07 ($0.02–$0.19) |
-| 20–50% | 13,670 | 0.14% | $0.09 | < $0.01 |
-| Bottom 50% | 22,783 | 0.01% | $0.01 | ≈ $0 |
+| Top 1% | 456 | 9.6% | $12.25 ($7.89–$17.16) | **$0.61** ($0.18–$1.72) |
+| 1–2% | 456 | 3.9% | $4.22 ($2.27–$6.87) | $0.21 ($0.06–$0.59) |
+| 2–5% | 1,367 | 2.0% | $2.37 ($1.21–$4.01) | $0.12 ($0.04–$0.33) |
+| 5–10% | 2,278 | 0.90% | $1.46 ($0.65–$2.46) | $0.07 ($0.02–$0.20) |
+| 10–20% | 4,557 | 0.58% | $1.01 ($0.47–$1.70) | $0.05 ($0.02–$0.14) |
+| 20–50% | 13,670 | 0.15% | $0.22 | $0.01 |
+| Bottom 50% | 22,783 | 0.02% | $0.01 | ≈ $0 |
 
 | Target | Visitors/month | Later buyers reached | Revenue per visitor | Extra gross profit/month before ad cost: central (95% CI) | Range across lift 5–20%, margin 30–70% |
 |---|---:|---:|---:|---|---|
-| Top 1% | 456 | 27% | $14.07 | $320 ($203–$470) | $96–$897 |
-| Top 5% | 2,279 | 54% | $4.87 | $555 ($401–$747) | $167–$1,555 |
-| Top 10% | 4,557 | 70% | $3.11 | **$709** ($523–$910) | $213–$1,985 |
-| Top 20% | 9,113 | 86% | $2.25 | **$1,025** ($779–$1,292) | $308–$2,871 |
+| Top 1% | 456 | 27% | $12.25 | $279 ($180–$391) | $84–$781 |
+| Top 5% | 2,279 | 55% | $4.71 | $537 ($401–$699) | $161–$1,503 |
+| Top 10% | 4,557 | 68% | $3.09 | **$703** ($527–$898) | $211–$1,968 |
+| Top 20% | 9,113 | 84% | $2.05 | **$933** ($727–$1,177) | $280–$2,612 |
 
-**Scope.** $709 a month is the value of the **top 10%** (about 4,600 visitors a month), not of retargeting in general. Widening to the top 20% (about 9,100 a month) raises it to about $1,025. The intervals cover sampling noise only; the assumed lift and margin matter more. Either way, retargeting is worth hundreds to low thousands of dollars a month before ad costs, not a major budget line. The bottom half of scored visitors produced 5 later buyers out of 45,715.
+**Scope.** $703 a month is the value of the **top 10%** (about 4,600 visitors a month), not of retargeting in general. Widening to the top 20% (about 9,100 a month) raises it to about $933. The intervals cover sampling noise only; the assumed lift and margin matter more. Either way, retargeting is worth hundreds to low thousands of dollars a month before ad costs, not a major budget line. The bottom half of scored visitors produced 11 later buyers out of 45,715.
 
 ### 8. The audience without hindsight (decision D-B5)
 
-The population above leaves out Google employees with a **whole-year** flag: a visitor is internal if any session in the year arrives through the internal link. For a first-time visitor, that flag is often set by a *later* session, which a live campaign can't see when it scores the first visit. `remarketing_table(sessions, internal_flag="first_visit")` rebuilds the table with only what's knowable at scoring time, and the chosen forest is refit on it in the same way.
+The population above leaves out Google employees with a **whole-year** flag: a visitor is internal if any session in the year arrives through the internal link. For a first-time visitor, that flag is often set by a *later* session, which a live campaign can't see when it scores the first visit. `remarketing_table(sessions, internal_flag="first_visit")` rebuilds the table with only what's knowable at scoring time, and the chosen model is refit on it in the same way.
 
 **Staff** are the visitors this adds back: flagged as employees only by a later session. They stay in the ranking, because nobody can remove them at scoring time. They can be identified afterwards, though, so their purchases don't count as successes and the break-even values them at zero.
 
@@ -313,37 +313,37 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 | Test months | As reported | No hindsight: all later buyers | No hindsight: real later buyers (staff not counted) |
 |---|---:|---:|---:|
 | Later buyers | 323 | 406 | 323 |
-| PR-AUC | 0.0607 | 0.0779 | 0.0583 |
-| Top 1%: recall / precision | 27.2% / 9.6% | 25.1% / 11.1% | 25.1% / 8.8% |
-| Top 10%: recall / precision | 70.0% / 2.5% | 73.9% / 3.3% | 72.1% / 2.5% |
-| Staff share of the top 1% / top 10% | — | 4.6% / 3.4% | 4.6% / 3.4% |
-| Later buyers the top 10% reaches (of which staff) | 226 (0) | 300 (67) | 233 (0) |
-| Later buyers in the bottom 40% | 0 | 0 | 0 |
+| PR-AUC | 0.0624 | 0.0806 | 0.0577 |
+| Top 1%: recall / precision | 27.2% / 9.6% | 25.6% / 11.3% | 25.4% / 8.9% |
+| Top 10%: recall / precision | 67.8% / 2.4% | 73.4% / 3.2% | 70.6% / 2.5% |
+| Staff share of the top 1% / top 10% | — | 4.7% / 3.7% | 4.7% / 3.7% |
+| Later buyers the top 10% reaches (of which staff) | 219 (0) | 298 (70) | 228 (0) |
+| Later buyers in the bottom 40% | 8 | 7 | 7 |
 
 | Real later buyers in the top 10% | Count | Share (Wilson 95% CI) |
 |---|---:|---|
-| Random forest, refit | 233 of 323 | **72.1%** (67.0–76.7%) |
+| Gradient boosting, refit | 228 of 323 | **70.6%** (65.4–75.3%) |
 | Two-line rule | 196 of 323 | 60.7% (55.3–65.9%) |
-| Difference (paired bootstrap) | | **+11.5 pts** (+6.3 to +16.4); PR-AUC +0.010 (−0.006 to +0.024), not significant |
+| Difference (paired bootstrap) | | **+9.9 pts** (+4.5 to +15.0); PR-AUC +0.009 (−0.009 to +0.025), not significant |
 
 | Target (no hindsight) | Visitors/month | Later buyers reached: all / real | Staff share of buyers reached | As reported | **Staff at zero lift** (95% CI) | If staff were valued like customers |
 |---|---:|---|---:|---:|---|---:|
-| Top 1% | 458 | 25% / 25% | 21% | $320 | **$315** ($203–$459) | $396 |
-| Top 5% | 2,292 | 55% / 53% | 23% | $555 | **$522** ($376–$683) | $803 |
-| Top 10% | 4,584 | 74% / 72% | 22% | $709 | **$738** ($551–$937) | $1,079 |
-| Top 20% | 9,167 | 89% / 87% | 22% | $1,025 | **$1,023** ($797–$1,291) | $1,393 |
+| Top 1% | 458 | 26% / 25% | 21% | $279 | **$271** ($178–$385) | $357 |
+| Top 5% | 2,292 | 54% / 52% | 24% | $537 | **$480** ($359–$616) | $741 |
+| Top 10% | 4,584 | 73% / 71% | 23% | $703 | **$757** ($577–$947) | $1,113 |
+| Top 20% | 9,167 | 86% / 84% | 23% | $933 | **$964** ($730–$1,219) | $1,334 |
 
-- **Staff are easy positives.** They buy within 30 days at 15.3% in the test months, against 0.35% for everyone else. Counted as buyers, they lift PR-AUC to 0.078 and top-10% recall to 74%, which flatters the model rather than showing a better ranking.
-- **The audience claim for real customers:** the refit model's top 10% holds **233 of 323 real later buyers, 72%** (67–77%), against **61%** for the two-line rule. The edge is about 11 points; the PR-AUC edge isn't significant.
-- **Staff in the audience:** they're 3.4% of the top-10% audience but **22% of the later buyers it reaches** (67 of 300). Retargeting can't cause their purchases, so they count as reach, not value.
-- **The value barely moves:** with staff at zero lift the top 10% is worth about $738 a month against $709 as reported, and the top 20% about $1,023 against $1,025. Valuing staff like customers would overstate the top 10% by 46% ($1,079).
-- **Seven** test visitors had an internal entry *before* their first visit, so a campaign could drop them at scoring time. Doing so changes nothing at this precision (PR-AUC 0.0779, 300 later buyers in the top 10%).
+- **Staff are easy positives.** They buy within 30 days at 15.3% in the test months, against 0.35% for everyone else. Counted as buyers, they lift PR-AUC to 0.081 and top-10% recall to 73%, which flatters the model rather than showing a better ranking.
+- **The audience claim for real customers:** the refit model's top 10% holds **228 of 323 real later buyers, 71%** (65–75%), against **61%** for the two-line rule. The edge is about 10 points; the PR-AUC edge isn't significant.
+- **Staff in the audience:** they're 3.7% of the top-10% audience but **23% of the later buyers it reaches** (70 of 298). Retargeting can't cause their purchases, so they count as reach, not value.
+- **The value moves little:** with staff at zero lift the top 10% is worth about $757 a month against $703 as reported, and the top 20% about $964 against $933. Valuing staff like customers would overstate the top 10% by 47% ($1,113).
+- **Seven** test visitors had an internal entry *before* their first visit, so a campaign could drop them at scoring time. Doing so changes nothing at this precision (PR-AUC 0.0806, 298 later buyers in the top 10%).
 
 ### What this means for D2 (carried to Act)
 
-1. **Retarget only the top-scored first visits**, and include a band only if the actual cost per retargeted visitor is below that band's affordable cost (top 1%: up to $0.70; beyond the top 20%, under a cent).
-2. **The audience claim, for a live campaign:** the model's top 10% holds **72% of real later buyers** (95% CI 67–77%), against **61% for the two-line rule**. About 1 in 5 of the later buyers it reaches are staff whom only a later visit reveals.
-3. **Keep the program small and cheap.** The top 10% (about 4,600 visitors a month) is worth about **$710–$740 a month** in gross profit before ad cost, and the top 20% about **$1,025**. The larger budget lever is probably channel mix (D1).
+1. **Retarget only the top-scored first visits**, and include a band only if the actual cost per retargeted visitor is below that band's affordable cost (top 1%: up to $0.61; beyond the top 20%, about a cent or less).
+2. **The audience claim, for a live campaign:** the model's top 10% holds **71% of real later buyers** (95% CI 65–75%), against **61% for the two-line rule**. Nearly 1 in 4 of the later buyers it reaches are staff whom only a later visit reveals.
+3. **Keep the program small and cheap.** The top 10% (about 4,600 visitors a month) is worth about **$700–$760 a month** in gross profit before ad cost, and the top 20% about **$930–$960**. The larger budget lever is probably channel mix (D1).
 4. **Measure the real lift with a 50/50 holdout of the top 20% for 12 months** (Part D). It detects a lift of about 14% or more. The 10% lift used here is borrowed from the literature, not measured on this store.
 
 ### Limitations
@@ -352,19 +352,19 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 - **Assumptions.** Lift and margin are assumptions, shown with sensitivity ranges. Revenue per visitor in the top bands has wide confidence intervals (a few hundred buyers). Revenue includes tax and shipping, so a 50% margin on it overstates gross profit somewhat.
 - **Short test period.** The test covers first visits May 1 – Jul 1, 2017 only, so seasonality (for example the holiday season) isn't represented.
 - **Cookie-based identity.** A visitor returning on another device looks like a non-returner, so return purchases are undercounted for everyone.
-- **Fold 3's embargo is 28 days.** Its embargo month is February, so labels of training first visits on Jan 30–31, 2017 could look into Mar 1–2, inside the validation months. No label actually does, so the tuning results stand. `tests/test_modeling.py` records it as an expected failure.
 
 ### Decision log
 
 | ID | Decision | Why |
 |---|---|---|
-| D-B1 | Model selection by highest mean validation PR-AUC, fixed before testing, so the random forest is chosen. Logistic regression kept as the explainer | Avoids choosing on the test set. The families are statistically tied, so interpretability comes from the logistic model |
+| D-B1 | Model selection by highest mean validation PR-AUC, fixed before testing, so gradient boosting is chosen (the random forest until the fold-3 fix, D-B8). Logistic regression kept as the explainer | Avoids choosing on the test set. The families are statistically tied, so interpretability comes from the logistic model |
 | D-B2 | Break-even reported as the **maximum affordable cost per visitor** by score band. Central 10% lift and 50% margin; sensitivity 5–20% and 30–70% | User's decision: no invented cost figure. The Head of Marketing compares with real costs |
 | D-B3 | Tuning grid extended until tree-model optima were interior (28 configurations) | A best result at a grid's edge may not be the true optimum |
 | D-B4 | H1 and H3 tested on training months only | Keeps the test months untouched for the single final evaluation |
 | D-B5 | Keep the primary analysis on the whole-year employee flag, and add an evaluation without hindsight (§8) as the live-campaign view. Claims about real customers come from it | The whole-year flag uses later sessions a live campaign can't see. Staff stay in the ranking but don't count as successes, and the break-even values them at zero |
 | D-B6 | Benchmark the model against a two-line rule (North America first, then furthest funnel step), not only the funnel rule | It encodes the two strongest signals of the H3 regression. Beating the funnel rule alone overstated what the model adds |
 | D-B7 | Paired comparisons report the share of later buyers in the top 10% (recall) instead of top-10% precision | It's the statistic the audience claim uses. Within each resample the two are rescaled versions of each other, so significance is unchanged |
+| D-B8 | Fold 3's training ends on Jan 29, not Jan 31, so every fold leaves at least 30 days before validation. The tuning was re-run, and by D-B1 the choice moved from the random forest to gradient boosting | February has 28 days, so the labels of 3,254 training first visits (15 buyers) on Jan 30–31 looked into the validation months. The fix changed only fold 3's scores and no family's best settings, and the grid extensions (D-B3) would have been the same. Boosting now leads by 0.0005, so following the rule costs a little: 71% of real later buyers in the top 10% instead of 72% |
 
 ---
 
@@ -699,29 +699,29 @@ Notebook: [notebooks/06_test_design.ipynb](../notebooks/06_test_design.ipynb) ·
 
 | Audience | Visitors/month | Staff share | Analysed/month | 30-day purchase rate | 30-day return-visit rate | Capped 30-day revenue per visitor (SD) |
 |---|---:|---:|---:|---:|---:|---|
-| Top 10% | 4,584 | 3.4% | 4,429 | 2.62% | 23.2% | $3.33 ($42.12) |
-| Top 20% | 9,167 | 2.5% | 8,942 | 1.56% | 19.4% | $2.29 ($38.88) |
+| Top 10% | 4,584 | 3.7% | 4,414 | 2.57% | 22.7% | $3.43 ($41.49) |
+| Top 20% | 9,167 | 2.4% | 8,947 | 1.50% | 18.9% | $2.15 ($36.90) |
 
-The design randomizes the **top 20%**: it brings about 140 later buyers a month into the analysis against 116 for the top 10%, so it detects smaller lifts (a 12-month 50/50 test of the top 10% would detect 14.8%).
+The design randomizes the **top 20%**: it brings about 135 later buyers a month into the analysis against 114 for the top 10%, so it detects smaller lifts (a 12-month 50/50 test of the top 10% would detect 15.0%).
 
 **Power to detect a +10% lift, top 20%:**
 
 | Metric | Split (held out / retargeted) | 6 weeks | 3 months | 6 months | 12 months | Smallest lift detectable at 12 months | Months for 80% power at +10% |
 |---|---|---:|---:|---:|---:|---:|---:|
-| 30-day purchase rate | **50/50** | 11% | 18% | 31% | **54%** | **13.6%** | **22.1** |
-| 30-day purchase rate | 10/90 | 7% | 9% | 14% | 24% | 22.6% | 61.5 |
-| 30-day return-visit rate | 50/50 | 78% | 98% | 100% | 100% | 3.5% | **1.5** |
-| 30-day return-visit rate | 10/90 | 37% | 68% | 93% | 100% | 5.8% | 4.0 |
-| Capped 30-day revenue | 50/50 | 6% | 8% | 10% | 16% | 29.1% | 101.3 |
-| Capped 30-day revenue | 10/90 | 5% | 6% | 7% | 9% | 48.4% | 281.4 |
+| 30-day purchase rate | **50/50** | 11% | 17% | 30% | **53%** | **13.8%** | **23.0** |
+| 30-day purchase rate | 10/90 | 7% | 9% | 14% | 23% | 23.1% | 63.8 |
+| 30-day return-visit rate | 50/50 | 77% | 98% | 100% | 100% | 3.5% | **1.5** |
+| 30-day return-visit rate | 10/90 | 36% | 66% | 92% | 100% | 5.9% | 4.2 |
+| Capped 30-day revenue | 50/50 | 6% | 8% | 10% | 16% | 29.3% | 103.0 |
+| Capped 30-day revenue | 10/90 | 5% | 6% | 7% | 9% | 48.8% | 286.0 |
 
 ![Smallest detectable lift by months of enrolment](figures/test_retargeting_mde.png)
 
-- **Holding out 10% is badly underpowered.** At a +10% lift, a 10/90 split has 7% power after 6 weeks, 9% after 3 months, 14% after 6 months and 24% after 12 months. It would need about 5 years to reach 80%.
-- **Purchases need a 50/50 split and a year.** Twelve months of enrolment detect a lift of about 14% (13.6%) with 80% power. A +10% lift has 54% power and would take about 22 months.
-- **The link to break-even.** In the top 20%, with staff at $0, capped 30-day revenue is $2.23 per retargeted visitor. Break-even lift = cost per retargeted visitor ÷ ($2.23 × 50% margin): 4.5% at $0.05, 9.0% at $0.10, 13.4% at $0.15 and 17.9% at $0.20. The 12-month MDE of 13.6% is the break-even lift at about $0.15 per retargeted visitor, so a year settles the decision whenever the real cost is at or above that.
+- **Holding out 10% is badly underpowered.** At a +10% lift, a 10/90 split has 7% power after 6 weeks, 9% after 3 months, 14% after 6 months and 23% after 12 months. It would need about 5 years to reach 80%.
+- **Purchases need a 50/50 split and a year.** Twelve months of enrolment detect a lift of about 14% (13.8%) with 80% power. A +10% lift has 53% power and would take about 23 months.
+- **The link to break-even.** In the top 20%, with staff at $0, capped 30-day revenue is $2.10 per retargeted visitor. Break-even lift = cost per retargeted visitor ÷ ($2.10 × 50% margin): 4.8% at $0.05, 9.5% at $0.10, 14.3% at $0.15 and 19.0% at $0.20. The 12-month MDE of 13.8% is the break-even lift at about $0.145 per retargeted visitor, so a year settles the decision whenever the real cost is at or above that.
 - **Return visits give an early read.** A +10% change in the 30-day return-visit rate is detectable after about 1.5 months at 50/50. That shows the ads reach people; it doesn't show they cause purchases.
-- **Revenue can't be the metric.** Capped 30-day revenue is so skewed that +10% would take about 8 years to detect.
+- **Revenue can't be the metric.** Capped 30-day revenue is so skewed that +10% would take more than 8 years to detect.
 
 ### 2. Display holdout (D1)
 
@@ -765,8 +765,8 @@ Measured across all site traffic, the test would have only 17–30% power. It re
 | Primary metric | 30-day purchase rate per assigned visitor (intention to treat), with staff identified afterwards left out. Early read: 30-day return-visit rate | Site visits per assigned user, by any route. Purchases and revenue reported but not powered |
 | Split | 50/50 (retargeted / held out) | 50/50 (shown ads / held out) |
 | Duration | 12 months of enrolment, read 30 days after it closes | 12 weeks |
-| Detectable effect (80% power) | 13.6% relative lift in purchases (54% power at +10%); +10% in return visits after 1.5 months | The loss of all 103 Display-credited visits a week, if the audience makes at most 2,044 visits a week (store-wide power 17%) |
-| Decision rule | Break-even lift = cost per retargeted visitor ÷ ($2.23 × 50% margin). Keep retargeting if the purchase lift's 95% CI lies above it, stop if the CI lies below it, otherwise extend enrolment (about 22 months gives 80% power at +10%). Early read: if return visits aren't clearly up, fix ad delivery before waiting a year. After the decision, keep a 10% holdout to monitor | If held-out users make significantly fewer visits, Display adds traffic: value the extra visits at the store's revenue per visit and compare with Display's cost. If the difference's 95% CI stays below the visits GA credits to Display, GA over-credits it: budget Display on the measured difference, not on GA's report |
+| Detectable effect (80% power) | 13.8% relative lift in purchases (53% power at +10%); +10% in return visits after 1.5 months | The loss of all 103 Display-credited visits a week, if the audience makes at most 2,044 visits a week (store-wide power 17%) |
+| Decision rule | Break-even lift = cost per retargeted visitor ÷ ($2.10 × 50% margin). Keep retargeting if the purchase lift's 95% CI lies above it, stop if the CI lies below it, otherwise extend enrolment (about 23 months gives 80% power at +10%). Early read: if return visits aren't clearly up, fix ad delivery before waiting a year. After the decision, keep a 10% holdout to monitor | If held-out users make significantly fewer visits, Display adds traffic: value the extra visits at the store's revenue per visit and compare with Display's cost. If the difference's 95% CI stays below the visits GA credits to Display, GA over-credits it: budget Display on the measured difference, not on GA's report |
 
 ### Limitations
 
@@ -778,5 +778,5 @@ Measured across all site traffic, the test would have only 17–30% power. It re
 
 | ID | Decision | Why |
 |---|---|---|
-| D-D1 | Retargeting test: randomize the top 20% 50/50 for 12 months; primary metric the 30-day purchase rate per assigned visitor, staff left out; return visits as the early read | A 10/90 split has at most 24% power at +10% within a year, and revenue is too skewed to test |
+| D-D1 | Retargeting test: randomize the top 20% 50/50 for 12 months; primary metric the 30-day purchase rate per assigned visitor, staff left out; return visits as the early read | A 10/90 split has at most 23% power at +10% within a year, and revenue is too skewed to test |
 | D-D2 | Display test: a 12-week 50/50 holdout of the users its campaigns target, measured on site visits; hold its budget until then | A purchase-based holdout has 5.1–6.4% power even if every credited purchase were incremental |

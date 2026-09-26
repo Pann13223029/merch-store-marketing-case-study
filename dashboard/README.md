@@ -81,7 +81,7 @@ Worth retargeting?       = CASE WHEN revenue_per_visitor * Lift * Margin >= Cost
 | **Bar chart** (horizontal) | Dimension `band`; metric `Max affordable cost` (MAX); sort by `band_order` ascending |
 | **Table** | `band`, `visitors_per_month`, `buy_rate`, `revenue_per_visitor`, `Max affordable cost`, `Worth retargeting?` |
 
-With the defaults, the table should match the report: the top 1% is worth **$0.70** per visitor, and bands below the top 20% are worth less than a cent.
+With the defaults, the table should match the report: the top 1% is worth **$0.61** per visitor, and bands below the top 20% are worth about a cent or less.
 
 ## 6. Share it
 

@@ -4,8 +4,8 @@ Population and label come from src/tables.py:remarketing_table(): external first
 non-buyers; label = purchase on a later visit within 30 days of the first visit.
 
 Validation respects time. Tuning uses expanding-window folds inside the training months,
-each followed by a one-month embargo so that no training label (which looks 30 days ahead)
-overlaps the validation months. The test months (2017-05-01 .. 2017-07-01) are touched once.
+each followed by an embargo of at least 30 days so that no training label (which looks 30 days
+ahead) overlaps the validation months. The test months (2017-05-01 .. 2017-07-01) are touched once.
 """
 
 from __future__ import annotations
@@ -21,11 +21,12 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, OrdinalEnc
 
 LABEL = "buy_within_30d"
 
-# (train months, validation months) with the month between them left out as an embargo
+# (train days, validation days) with at least 30 days between them left out as an embargo. February has
+# only 28 days, so fold 3's training ends on Jan 29 rather than Jan 31.
 CV_FOLDS = [
     (("2016-08-01", "2016-10-31"), ("2016-12-01", "2017-01-31")),
     (("2016-08-01", "2016-12-31"), ("2017-02-01", "2017-03-31")),
-    (("2016-08-01", "2017-01-31"), ("2017-03-01", "2017-04-30")),
+    (("2016-08-01", "2017-01-29"), ("2017-03-01", "2017-04-30")),
 ]
 
 COUNT_FEATURES = ["hits", "pageviews", "time_on_site", "product_detail_views",

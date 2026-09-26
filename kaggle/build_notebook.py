@@ -32,7 +32,7 @@ It's a condensed, runnable version of my full project on the Google Analytics 36
 
 **What you'll see:**
 1. **The employees, and one buyer who needs a segment of its own.** About 41% of the store's revenue comes from Google staff, and one outside corporate buyer (the key account) decides Display's numbers alone. I report both on their own before any marketing analysis.
-2. **Retargeting:** a model trained on outside visitors only puts 70% of later buyers in its top 10% of first-time visitors, against 61% for a two-line rule (North America first, then how far the visit got). The top 10% is worth only about $710–$740 a month.
+2. **Retargeting:** a model trained on outside visitors only puts 68% of later buyers in its top 10% of first-time visitors, against 61% for a two-line rule (North America first, then how far the visit got). The top 10% is worth only about $700–$760 a month.
 3. **Attribution:** the store's GA report likely over-credits Organic Search by up to about 15 points of purchases. A Paid Search click's attributed value is a ceiling, and without the key account Display's is stable.
 
 I also audited **Google's BigQuery ML teaching lab** for this question, and its published score turned out to be inflated by employees. That audit needs your own Google Cloud project, so I summarize it at the end rather than re-run it here.""")
@@ -105,28 +105,28 @@ rate_with_ci_chart(list(g.index), g.rate.tolist(), g.lo.tolist(), g.hi.tolist(),
     subtitle="Share of outside first-time visitors (who didn't buy) that purchase on a later visit within 30 days, with 95% CI",
     note=f"First visits Aug 2016 – Apr 2017 (n = {g.n.sum():,}). Chi-square: χ² = {chi2:,.0f}, df = {dof}, p < 0.001. Google employees excluded.");''')
 
-md("""**The model:** I use a random forest with the settings that won time-based tuning in the repository (28 configurations; minimum leaf size 10, √features), and compare it with two rules that need no model (the funnel rule, and a **two-line rule**: North American first visits first, then the funnel rule) and with the feature set of Google's own lab, refit on this corrected data.""")
+md("""**The model:** I use gradient boosting with the settings that won time-based tuning in the repository (28 configurations; learning rate 0.02, 4-leaf trees, minimum leaf size 1,000), and compare it with two rules that need no model (the funnel rule, and a **two-line rule**: North American first visits first, then the funnel rule) and with the feature set of Google's own lab, refit on this corrected data.""")
 code('''scores = {"Funnel rule": funnel_rule_score(test),
           "Two-line rule": funnel_geo_rule_score(test),
           "Lab's features, refit": lab_features_pipeline().fit(train, train[LABEL]).predict_proba(test)[:, 1],
-          "Our model (random forest)": random_forest_pipeline(min_samples_leaf=10, max_features="sqrt")
-                                           .fit(train, train[LABEL]).predict_proba(test)[:, 1]}
+          "Our model (gradient boosting)": boosting_pipeline(learning_rate=0.02, max_leaf_nodes=4, min_samples_leaf=1000)
+                                               .fit(train, train[LABEL]).predict_proba(test)[:, 1]}
 y = test[LABEL].to_numpy()
 pd.DataFrame({k: ranking_metrics(y, s) for k, s in scores.items()}).T.style.format(
     {"pr_auc": "{:.3f}", "roc_auc": "{:.3f}", "precision_top_1pct": "{:.1%}", "lift_top_1pct": "{:.1f}x",
      "lift_top_5pct": "{:.1f}x", "lift_top_10pct": "{:.1f}x", "recall_top_10pct": "{:.1%}"})''')
-code('''colors = {"Our model (random forest)": SERIES_1, "Lab's features, refit": "#eb6834", "Funnel rule": "#1baf7a"}
-reach = top_share_recall(y, scores["Our model (random forest)"], 0.10)
+code('''colors = {"Our model (gradient boosting)": SERIES_1, "Lab's features, refit": "#eb6834", "Funnel rule": "#1baf7a"}
+reach = top_share_recall(y, scores["Our model (gradient boosting)"], 0.10)
 gains_chart({k: cumulative_gains(y, scores[k]) for k in colors}, colors,
     title=f"The model's top 10% of first-time visitors reaches {reach:.0%} of later buyers",
     subtitle="Share of later buyers captured by targeting the highest-scored first visits",
     note=f"Out-of-time test: first visits May 1 – Jul 1, 2017 ({len(test):,} outside visitors, {int(y.sum())} later buyers). "
          "The two-line rule is in the table above.");''')
 
-md("""The model clearly beats the funnel rule, but a two-line rule gets most of the way (`recall_top_10pct` in the table): what the model mainly adds is a sharper top of the ranking. One caveat my red-team review caught: this population leaves out employees using the whole year of visits, which is hindsight a live campaign doesn't have. Re-scored without it in the repository, the model's top 10% holds 72% of real later buyers against 61% for the two-line rule, and employees whom only a later visit reveals are 22% of the buyers it reaches.
+md("""The model clearly beats the funnel rule, but a two-line rule gets most of the way (`recall_top_10pct` in the table): what the model mainly adds is a sharper top of the ranking. One caveat my red-team review caught: this population leaves out employees using the whole year of visits, which is hindsight a live campaign doesn't have. Re-scored without it in the repository, the model's top 10% holds 71% of real later buyers against 61% for the two-line rule, and employees whom only a later visit reveals are 23% of the buyers it reaches.
 
 **Break-even:** is a visitor worth retargeting? Only if revenue per visitor over the next 30 days × incremental lift × gross margin is at least the cost per visitor. I measure revenue per visitor on the test months, take a 10% lift anchored on randomized experiments (8–10.5%), and assume a 50% margin.""")
-code('''model_score = scores["Our model (random forest)"]
+code('''model_score = scores["Our model (gradient boosting)"]
 bands = value_by_band(y, test.revenue_30d_usd.to_numpy(), model_score)
 bands["max_affordable_cost_usd"] = max_affordable_cost(bands.revenue_per_visitor)
 bands.style.format({"buy_rate": "{:.2%}", "revenue_per_visitor": "${:.2f}", "rpv_ci_low": "${:.2f}",
@@ -137,7 +137,7 @@ value_of_targets(y, test.revenue_30d_usd.to_numpy(), model_score, months).style.
     {"visitors_per_month": "{:,.0f}", "share_of_later_buyers": "{:.0%}", "revenue_per_visitor": "${:.2f}",
      "gross_profit_per_month": "${:,.0f}", "ci_low": "${:,.0f}", "ci_high": "${:,.0f}", "range_low": "${:,.0f}",
      "range_high": "${:,.0f}"})''')
-md("""The top 10% (about 4,600 visitors a month) is worth about $710 a month in the central case ($738 in the repository once employees in the audience are valued at zero), and the top 20% about $1,025. So retargeting is a small, cheap program. Its real lift needs a randomized test: I sized it in the repository as a 50/50 holdout of the top 20% for 12 months, which detects a lift of about 14% or more.""")
+md("""The top 10% (about 4,600 visitors a month) is worth about $700 a month in the central case ($757 in the repository once employees in the audience are valued at zero), and the top 20% about $930. So retargeting is a small, cheap program. Its real lift needs a randomized test: I sized it in the repository as a 50/50 holdout of the top 20% for 12 months, which detects a lift of about 14% or more.""")
 
 md("""## 4. D1: which channels deserve the credit?
 
