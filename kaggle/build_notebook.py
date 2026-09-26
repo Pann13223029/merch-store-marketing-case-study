@@ -10,7 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 cells = []
-md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
+# Notebook viewers (Jupyter, Kaggle, GitHub) read text between two $ signs as maths, so "$700–$760" loses its
+# dollar signs; \$ displays as a plain $ everywhere.
+md = lambda s: cells.append(nbf.v4.new_markdown_cell(s.replace("$", r"\$")))
 code = lambda s: cells.append(nbf.v4.new_code_cell(s))
 
 def module_source(name: str) -> str:
