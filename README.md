@@ -4,53 +4,115 @@ Pann Phetra · [github.com/Pann13223029](https://github.com/Pann13223029)
 
 BigQuery SQL · BigQuery ML · Python (pandas, scikit-learn, statsmodels) · Looker Studio
 
-A marketing-analytics case study on Google's own online store: its Google Analytics 360 export in BigQuery (Aug 2016 – Aug 2017, 903,653 sessions). The project follows the Google Data Analytics case-study structure (**Ask → Prepare → Process → Analyze → Share → Act**), using the methods of the Advanced certificate: SQL on nested data, hypothesis tests, regression, tuned machine-learning models, bootstrap confidence intervals, and power analysis.
+**Taken at face value, Google's online merch store runs on referral traffic. It doesn't.** 41% of its revenue comes from Google's own employees, clicking through from an internal link that the public data hides as "Referral". Google's own teaching lab on this data didn't catch it either: 98.8% of the "likely buyers" at the top of its model are Google staff.
 
-**Stakeholder:** the store's Head of Marketing, who has two decisions to make:
-- **D1: channel budget.** Which channels actually produce buyers, compared with what the GA report credits them for?
-- **D2: retargeting.** Which first-time visitors are worth paying to bring back?
+That was the first surprise in a year of the store's analytics (Aug 2016 – Aug 2017, 903,653 visits in BigQuery). The two questions that matter to its marketing team, which channels deserve the budget and which visitors are worth paying to bring back, only made sense once those visitors were set aside.
 
-## The answer
+## Why I did this
 
-| Decision | Answer | Confidence |
+I start with the business problem, then solve it with whatever fits: product, data or AI. I co-founded an EdTech company, OpenMirai (one of five founders, leading strategy), worked as a business analyst at Opendream, and I'm finishing my degree at Ritsumeikan Asia Pacific University in Japan (March 2027).
+
+In summer 2025 I was vice leader of a student shaved-ice stand at two festivals in Beppu. On night one we logged all 450 cups by hand, with each flavour and our best guess at each customer's age and group, and used the tally to rework the menu for night two. This project asks the same question at Google's scale: who is actually buying, and what should change?
+
+It's also my capstone for the Google Data Analytics certificate, with a twist. Most projects on this dataset ask "will this visitor buy?". I asked the question the store's Head of Marketing has to answer instead, and I checked the Google lab that asks the first one.
+
+## The short answer
+
+| The Head of Marketing asks | My answer | How sure |
 |---|---|---|
-| **D1: channel budget** | Don't move budget on GA's channel report. It likely over-credits Organic Search by up to about 15 points of purchases, and it credits visitors returning directly (34% of purchases) to earlier campaigns. Keep Paid Search, but bid below its value ceiling ($0.78–$1.21 a click at most) and split brand from non-brand. Hold Display's budget: its reported revenue was mostly one existing corporate buyer, so test it first. | **Moderate** for the Organic Search gap: the direction holds under every reading, but the size rests on an assumption the data can't check. **Low** for what Paid Search and Display cause, which only tests can show |
-| **D2: retargeting** | Retarget only the top-scored first-time visitors. The model's top 10% holds 72% of real later buyers (61% for a two-line rule), but it's worth only about $710–$740 a month before ad costs. Measure the real lift with a 50/50 holdout. | **High** for the ranking; **low** for the lift, which is borrowed from published experiments |
+| **Which channels deserve the budget?** | Don't move money on GA's channel report: it likely gives Organic Search up to about 15 points of purchase credit that visitors returning on their own earned. Keep Paid Search, but bid below what a click can be worth ($0.78–$1.21 at most). Hold Display's budget until a test shows what it adds. | **Moderate** on Organic Search: the direction holds under every reading, but the size rests on an assumption. **Low** on what Paid Search and Display cause, which only a test can show |
+| **Which first-time visitors are worth bringing back?** | Only the top-scored ones. A model's top 10% holds 72% of later buyers, but retargeting them is worth only about $710–$740 a month before ad costs. Measure the real lift with a 50/50 test. | **High** for the ranking. **Low** for the lift, which is borrowed from other companies' experiments |
 
-**Why there's no "% budget shift per channel":** the data has no ad costs, and attribution credit isn't incremental, so moving money by credit could fund channels that didn't cause the sales. Test first: [notebook 06](notebooks/06_test_design.ipynb) sizes the tests.
+There's no "move X% of budget to channel Y" here, on purpose. The data has no ad costs, and getting credit for a sale isn't the same as causing it, so moving money by credit could fund channels that didn't cause the sales. I sized the tests that would settle it instead ([notebook 06](notebooks/06_test_design.ipynb)).
 
-→ **One-page executive summary for the stakeholder:** [reports/00_executive_summary.md](reports/00_executive_summary.md)
+→ **The one-page memo I'd hand the Head of Marketing:** [reports/00_executive_summary.md](reports/00_executive_summary.md)
 
 ---
 
-## Key findings
+## What I found
 
-**1. About 41% of the store's revenue is Google employees, not marketing.** In the public data, their visits show up as "Referral" with the source hidden. Google's own training copy of the data shows the referrer: `mall.googleplex.com`, the internal employee store link. That let me check the employee filter against the true source: 99.2% of flagged visitors really are employees, and it catches 98.2% of employee purchases.
+### 1. The store's biggest "channel" was Google itself
 
-**2. Google's BigQuery ML teaching lab for this question publishes a score that employees inflate.** GSP229 teaches BigQuery ML on this data. I rebuilt it from the lab's own SQL and got the published scores back (0.724 / 0.909 vs 0.72 / 0.91). Its 0.91 ROC-AUC is inflated because 61% of its training positives (74% of its evaluation positives) are employees, and its top 1% of prospects are 98.8% employees. On outside visitors it scores 0.863, close to a version trained without employees (0.877). Fine for teaching; remove internal traffic before targeting.
+In the public data, employee visits show up as Referral with the source hidden. Google's own training copy of the data shows where they came from: `mall.googleplex.com`, the internal employee store link. That let me check my employee filter against the truth: 99.2% of the visitors it flags really are employees, and it catches 98.2% of their purchases. Everything below leaves these visitors out, because no marketing budget buys an employee's order.
+
+### 2. Google's teaching model fell for the same thing
+
+Google's BigQuery ML lab, GSP229, teaches machine learning on this store's data by asking whether a first-time visitor will buy later. I rebuilt it from the lab's own SQL and got its published scores back. The model looks excellent, but mostly because 61% of the buyers it learns from are employees. 98.8% of its top 1% of "likely buyers" are Google staff, and of the 1,020 visitors it ranks highest, only 2 were outside customers who went on to buy. Fine for teaching; take internal traffic out before using a model like this to target anyone.
 
 ![The lab model's top prospects are employees](reports/figures/lab_audit_top_ranked.png)
 
-**3. A corrected retargeting model finds most later buyers, but a simple rule comes close and the payoff is small.** Trained only on outside visitors, with a 30-day window, and tested once on months it never saw:
-- scored at their first visit, the top 10% of first-time visitors hold **72% of the outside customers who bought within the next 30 days** (95% CI 67–77%), against **61%** for a two-line rule: North American visitors first, then how far they got toward checkout;
-- about 1 in 5 of the later buyers the top 10% reaches are Google employees whom only a later visit reveals, so they count as reach, not value;
-- the top 10% is worth about **$710–$740 a month** in extra gross profit before ad costs, and the top 20% about **$1,025**.
+<details>
+<summary>The numbers</summary>
+
+- Recreated scores: 0.724 / 0.909, against the published 0.72 / 0.91.
+- Employees are 61% of the training positives and 74% of the evaluation positives.
+- Scored only on outside visitors, its ROC-AUC (how well it ranks buyers above non-buyers, from 0.5 for chance to 1) drops from 0.910 to 0.863: −0.047 (95% CI −0.059 to −0.035).
+- Without the source, medium and channel features the gap disappears (0.885 / 0.882), but employees still fill 59–66% of the top 1% through location and engagement, so they have to leave the population, not just the features.
+- A version trained without employees scores 0.877 on outside visitors.
+
+</details>
+
+### 3. GA's report gives Organic Search credit that returning visitors earned
+
+When someone comes back by bookmark or by typing the address, GA's default report hands the sale to the last campaign they arrived from, such as an earlier Google search. I rebuilt the journeys behind 5,058 outside purchases and let a data-driven model share out the credit instead. It gives Organic Search 38.2% of purchases, not GA's 53.8%: about 15 points less, if every direct return was the visitor's own idea. Visitors coming back on their own bring 34% of purchases, and the report credits them to earlier campaigns.
+
+![Credit gap](reports/figures/d1_credit_gap.png)
+
+<details>
+<summary>The numbers</summary>
+
+- The gap is 15.5 points (95% CI 14.4–16.6) if every direct return was self-initiated, 1.8 points on GA's own labels, and about 13–15 at a benchmark from how returning visitors behave. About 7 of the points are a lookback-window choice.
+- Returning visitors bring 34% of purchases and 44% of capped revenue. First-ever visits that arrived direct add 19% and 20%.
+- The model is a third-order Markov chain: it asks how many sales would disappear if a channel were removed from the journeys (a value-weighted removal effect), with a paired bootstrap that resamples visitors.
+
+</details>
+
+### 4. One office desktop made Display look like a winner
+
+It visited the store 278 times, on weekdays during office hours. It had already placed a $17,860 order before it clicked a Display ad, once. GA remembers campaigns, so it labelled the account's next 15 purchases "Display": $110,553 from a customer who was already buying. That one account is 89% of everything GA credits to Display. I report it on its own, like employees. Without it, a Display click is credited with $2.84–$3.87 under every rule, and only a test can show what Display really adds.
+
+<details>
+<summary>The numbers</summary>
+
+- The key account: 16 purchase sessions worth $128,413, 15% of outside revenue in the period and half of all bulk purchase revenue.
+- Its only Display click was on Mar 10, 2017; the 15 purchases GA labelled Display followed from Mar 24 to Jun 30, all on return visits.
+
+</details>
+
+### 5. A Paid Search click is worth less than its credit suggests
+
+Every attribution rule I tested credits a Paid Search click with $1.56–$2.43 of revenue. At a 50% margin, that makes $0.78–$1.21 the most a click is worth bidding, and only if every one of those sales needed the ad. Many probably didn't: all 65 Paid Search purchases with a readable keyword came from searches for the store or its brand, the searches least likely to need an ad. So I treat that value as a ceiling, not a profit.
+
+![Value per paid click](reports/figures/d1_value_per_click.png)
+
+<details>
+<summary>The numbers</summary>
+
+- The bid ceiling is $0.39–$0.61 if half of the sales needed the ad, and $0.19–$0.30 if a quarter did.
+- 77% of Paid Search purchases have no readable keyword (162 on days the export blanked it, 55 from Dynamic Search Ads), so the brand share can't be measured in full.
+
+</details>
+
+### 6. A model can find tomorrow's buyers, but they're worth less than you'd hope
+
+Scored at their first visit, the top 10% of first-time visitors held 72% of the outside customers who bought within the next 30 days. A two-line rule (North American visitors first, then how far they got toward checkout) reached 61%, so the model's edge is real but modest. And the money is small: retargeting the top 10% is worth about $710–$740 a month in extra gross profit, before ad costs.
 
 ![Cumulative gains](reports/figures/d2_gains_chart.png)
 
 *The chart shows the population as first reported (70% vs 61%). Scored without hindsight about who is an employee, the model reaches 72% of real later buyers.*
 
-**4. GA's channel report likely over-credits Organic Search by up to about 15 points of purchases.** When a visitor comes back by bookmark or typed URL, GA credits their earlier campaign. Traced through visitor journeys, a data-driven model gives Organic Search 38.2% of the 5,058 outside purchases, against GA's 53.8%: a 15.5-point gap (95% CI 14.4–16.6) if every direct return was self-initiated. On GA's own labels the gap is 1.8 points, and a benchmark from how returning visitors behave puts it at about 13–15; about 7 of the points are a lookback choice. **Visitors returning directly bring 34% of purchases and 44% of capped revenue**, which the report credits to earlier campaigns. First-ever visits that arrived direct add 19% and 20%.
+<details>
+<summary>The numbers</summary>
 
-![Credit gap](reports/figures/d1_credit_gap.png)
+- 72% has a 95% CI of 67–77%. The model was trained only on outside visitors, with a 30-day window, and tested once on months it never saw (May–Jun 2017).
+- About 1 in 5 of the later buyers the top 10% reaches are Google employees whom only a later visit reveals, so they count as reach, not value.
+- The top 20% is worth about $1,025 a month. PR-AUC is 0.061, against 0.028 for a funnel rule and 0.049 for the two-line rule.
 
-**5. Keep Paid Search, but treat its value as a ceiling.** A click is credited with $1.56–$2.43 under every attribution rule tested. At a 50% margin, the break-even bid is at most $0.78–$1.21 if every sale needed the ad, $0.39–$0.61 if half did, and $0.19–$0.30 if a quarter did. All 65 Paid Search purchases with a readable keyword came from searches for the store or its brand, the least incremental kind; 77% have no readable keyword.
+</details>
 
-**6. Display's reported revenue was mostly one existing corporate buyer.** One outside visitor, 278 visits from a single office desktop, holds 89% of the revenue GA credits to Display. It was already buying before its only Display click, and GA's campaign carry-over labelled its next 15 purchases Display. Reported as its own segment like employees (the key account: 16 purchase sessions, $128,413, 15% of outside revenue in the period), it leaves a Display click with an attributed value of $2.84–$3.87 under every rule. Only a holdout test can show what Display adds.
+## What I'd do on Monday
 
-![Value per paid click](reports/figures/d1_value_per_click.png)
-
-## Recommendations (Act)
+Four things can start now, two need a test first, and two are worth exploring.
 
 | When | Action | Owner | At stake |
 |---|---|---|---|
@@ -63,9 +125,34 @@ A marketing-analytics case study on Google's own online store: its Google Analyt
 | Explore | Retention: email and reminders for past visitors | Head of Marketing | 34% of purchases |
 | Explore | A direct sales path for corporate (bulk) buyers | Head of Marketing, Sales | $248,552 of bulk purchase sessions, half of it one account |
 
+## Where I got it wrong
+
+Some mistakes I caught along the way. Each one is recorded in the decision logs:
+- **I assumed Google's lab used the public dataset.** It uses a fuller table, so I redid the audit on the lab's own data, which turned an estimate of the employee share (53%) into a verified figure (61%).
+- **An ID that looked unique wasn't.** The lab's `unique_session_id` repeats for visits split at midnight, and joining on it duplicated 1,666 rows. The join now uses a fingerprint of all grouping columns.
+- **A memoryless model over-credited Social.** A first-order Markov chain gave Social nearly 3× the purchases its journeys produced. A third-order chain fixed most of it, and Social and Affiliates stay out of the headlines.
+- **A revenue-splitting method I rejected** gave Paid Search less credit than last click. I replaced it with a value-weighted removal effect.
+
+Then, before calling it done, I put the whole analysis through an AI-assisted red-team review: re-derive every headline from the data and hunt for claims the evidence doesn't support. It changed six conclusions:
+- **Display** was mostly one corporate buyer, so it's now reported on its own as the key account.
+- **Organic Search's over-credit** depends on how GA's direct-return flag is read, so it's now a range with moderate confidence. A check that had seemed to confirm it turned out to be an export-day artifact.
+- **"Direct"** mixed visitors returning on their own with first-ever visits, so returning visitors get 34% of purchases, not the half I first reported.
+- **The retargeting population** used later visits to leave out employees, which a live campaign can't see. Scored without that hindsight, the model still reaches 72% of real later buyers, and employees are 22% of the buyers it reaches.
+- **Both proposed tests** were too small to detect their effects, so notebook 06 sizes designs that can.
+- **Paid Search:** every purchase with a readable keyword was a brand search, so its value is now a ceiling, with scenarios for how many sales the ads caused.
+
+## What I learned
+
+- **Question the data before the model.** The biggest findings here came from asking who is in the data, not from a model: employees and one corporate buyer changed almost every channel number.
+- **Credit isn't causation.** Attribution shows the paths people took, not what each channel caused, so the recommendations end in tests sized to detect a real effect.
+- **Review early.** The red-team review changed six conclusions at the end. Next time I'd run smaller reviews at the start and halfway, before conclusions harden.
+- **Start from the decision.** Framing the work around the Head of Marketing's two decisions told me which analyses mattered, and made "test it first" a legitimate answer.
+
 ---
 
-## How the analysis was done
+## How I did it, for technical reviewers
+
+D1 is the channel-budget decision and D2 the retargeting decision; H1–H4 are the hypotheses set in the Ask phase.
 
 ### Ask ([reports/01_ask.md](reports/01_ask.md))
 The business task, stakeholders, 8 guiding questions, 4 hypotheses with pre-specified tests, and success criteria. The public dataset is heavily used, and Google's own lab already asks "will this visitor buy?", so the project is framed around **budget decisions** and around **auditing** that lab rather than repeating it.
@@ -93,16 +180,6 @@ The business task, stakeholders, 8 guiding questions, 4 hypotheses with pre-spec
 - **Charts:** [reports/figures/](reports/figures/). Chart colors come from a validated palette, checked for color-blind separation.
 - **Looker Studio dashboard:** a step-by-step build guide and its data in [dashboard/](dashboard/) (overview, channel credit, and an interactive break-even page with lift, margin, and cost controls).
 - **Kaggle notebook:** a runnable, condensed version, [kaggle/merch_store_marketing_case_study.ipynb](kaggle/merch_store_marketing_case_study.ipynb), with publishing steps in [kaggle/](kaggle/).
-
-## Getting things right: corrections made along the way
-
-Every one of these is recorded in the decision logs, because catching them is part of the analysis:
-- **Wrong assumption about the lab's data.** I first assumed Google's lab used the public dataset. It uses a different, fuller table. The audit was redone on the lab's own table, which turned an estimate of the employee share (53%) into a verified figure (61%).
-- **An ID that wasn't unique.** The lab's `unique_session_id` repeats for visits split at midnight. Joining predictions on it duplicated 1,666 rows, so the join now uses a fingerprint of all grouping columns.
-- **Memoryless Markov chain.** A first-order chain credited Social with nearly 3× the purchases its journeys actually produced. A third-order chain fixed most of this; the rest is flagged, and the Markov values for Social and Affiliates aren't used in headlines.
-- **A rejected revenue-credit method.** Splitting each purchase's revenue by global removal effects gave Paid Search less credit than last click. It was replaced by a value-weighted removal effect.
-
-**A red-team review.** A reviewer then re-derived the D1 and D2 headlines from the data, looking for claims the evidence didn't support, and six findings changed the analysis. One outside corporate buyer held 89% of Display's reported revenue, so it's now reported as its own segment, the key account. The Organic Search over-credit depends on how GA's direct-return flag is read, so it's now a range with moderate confidence, and a check that had seemed to confirm it turned out to be an export-day artifact. "Direct" mixed visitors returning on their own with first-ever visits, so returning visitors now get 34% of purchases rather than the half first reported. The retargeting population left out employees using visits from later in the year, which a live campaign can't see; scored without that hindsight, the model still reaches 72% of real later buyers, and employees are 22% of the buyers it reaches. Both proposed tests were too small to detect their effects, so notebook 06 sizes designs that can. And every Paid Search purchase with a readable keyword was a brand search, so its value is now a ceiling, with scenarios for how many sales the ads actually caused.
 
 ## Reproduce it
 
