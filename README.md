@@ -183,11 +183,13 @@ The business task, stakeholders, 8 guiding questions, 4 hypotheses with pre-spec
 - **Slide deck:** 14 slides for presenting the findings, with the lab audit and methods as an appendix: [reports/slides.pdf](reports/slides.pdf)
 - **Charts:** [reports/figures/](reports/figures/). Chart colors come from a validated palette, checked for color-blind separation.
 - **Looker Studio dashboard:** a step-by-step build guide and its data in [dashboard/](dashboard/) (overview, channel credit, and an interactive break-even page with lift, margin, and cost controls).
-- **Kaggle notebook:** a runnable, condensed version, [kaggle/merch_store_marketing_case_study.ipynb](kaggle/merch_store_marketing_case_study.ipynb), with publishing steps in [kaggle/](kaggle/).
+- **Kaggle notebook:** a runnable, condensed version, [published on Kaggle](https://www.kaggle.com/code/pannphetra/google-merch-store-the-next-marketing-dollar). Its source is [kaggle/merch_store_marketing_case_study.ipynb](kaggle/merch_store_marketing_case_study.ipynb), with publishing steps in [kaggle/](kaggle/).
 
 ## Reproduce it
 
-**Prerequisites:** Python 3.12, the [gcloud CLI](https://cloud.google.com/sdk/docs/install), and a Google Cloud project with the BigQuery API enabled (a free [BigQuery sandbox](https://cloud.google.com/bigquery/docs/sandbox) project is enough).
+**Quickest:** open the [Kaggle notebook](https://www.kaggle.com/code/pannphetra/google-merch-store-the-next-marketing-dollar), choose **Copy & Edit**, then **Run All**. Kaggle provides the BigQuery access, so it needs no Google Cloud setup. It condenses the analysis into one notebook.
+
+**The full project** needs Python 3.12, the [gcloud CLI](https://cloud.google.com/sdk/docs/install), and a Google Cloud project with the BigQuery API enabled (a free [BigQuery sandbox](https://cloud.google.com/bigquery/docs/sandbox) project is enough).
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
