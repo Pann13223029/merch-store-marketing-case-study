@@ -10,7 +10,7 @@ That was the first surprise in a year of the store's analytics (Aug 2016 – Aug
 
 ## Why I did this
 
-I start with the business problem, then solve it with whatever fits: product, data or AI. I co-founded an EdTech company, OpenMirai (one of five founders, leading strategy), worked as a business analyst at Opendream, and I'm finishing my degree at Ritsumeikan Asia Pacific University in Japan (March 2027).
+I start with the business problem, then solve it with whatever fits: product, data or AI. I co-founded an EdTech company, OpenMirai (one of five founders, leading strategy), worked as a business analyst intern at Opendream, and I'm finishing my degree at Ritsumeikan Asia Pacific University in Japan (March 2027).
 
 In summer 2025 I was vice leader of a student shaved-ice stand at two festivals in Beppu. On night one we logged all 450 cups by hand, with each flavour and our best guess at each customer's age and group, and used the tally to rework the menu for night two. This project asks the same question at Google's scale: who is actually buying, and what should change?
 
