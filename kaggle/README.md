@@ -9,11 +9,20 @@ Its helper cells are this repository's `src/` modules, copied in by the build sc
 
 ## Publish it on Kaggle
 
+With the [Kaggle CLI](https://github.com/Kaggle/kaggle-api), signed in once with `kaggle auth login`, one command uploads the notebook, and Kaggle runs it. [`kernel-metadata.json`](kernel-metadata.json) holds its Kaggle id, title and settings.
+
+```bash
+python kaggle/build_notebook.py    # only after changing src/
+kaggle kernels push -p kaggle
+kaggle kernels status pannphetra/google-merch-store-the-next-marketing-dollar
+```
+
+Each push saves and runs a new version. The first cell after the helper code queries BigQuery and scans about 0.8 GB, so the notebook runs with internet on, which Kaggle allows only for phone-verified accounts.
+
+Without the CLI:
 1. On Kaggle: **Create → New Notebook → File → Import Notebook**, and upload the `.ipynb` file.
-2. In the notebook settings, turn **Internet on**. The first cell after the helper code queries BigQuery and scans about 0.8 GB.
+2. In the notebook settings, turn **Internet on**.
 3. **Run all.** Kaggle notebooks can query BigQuery public datasets with the Python client. If your session asks for credentials, attach a Google Cloud account under **Add-ons → Google Cloud Services**.
 4. **Save Version → Save & Run All** so the published version shows its outputs.
-
-Rebuild it after changing `src/`: `python kaggle/build_notebook.py`.
 
 Suggested tags: `marketing`, `google analytics`, `bigquery`, `attribution`, `classification`.
