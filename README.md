@@ -1,4 +1,4 @@
-# Where should the Google Merchandise Store spend its next marketing dollar?
+# ![Where should the Google Merchandise Store spend its next marketing dollar?](.github/banner.jpg)
 
 Pann Phetra · [github.com/Pann13223029](https://github.com/Pann13223029)
 
@@ -149,3 +149,5 @@ Then run `notebooks/01` → `06` in order.
 - **Privacy.** The data is anonymized by Google. Recommendations assume retargeting reaches only visitors who consented. The retargeting audience is 91% North American because that's where buyers are, and the report says so openly.
 
 **Data:** Google Analytics 360 sample dataset (`bigquery-public-data.google_analytics_sample`) and the `data-to-insights.ecommerce.web_analytics` table used in Google's training labs, both published by Google for learning. **Code and write-ups:** [MIT license](LICENSE).
+
+**Banner photo:** Adeniji Abdullahi A on [Pexels](https://www.pexels.com/photo/a-happy-man-looking-at-a-cellphone-10843136/) (free Pexels license), background removed.
