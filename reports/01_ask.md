@@ -65,8 +65,8 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 | Sessions / visitors | 903,653 / 714,167 |
 | Purchase sessions | 11,552 (1.28% conversion) |
 | Buyers / revenue | 10,022 / $1.78M |
-| Buyers with multi-session journeys | 6,895 (69%) → attribution is worth doing |
-| New visitors buying on a *later* visit vs first visit | 4,650 vs 4,436 (all traffic). **Corrected in Prepare:** excluding likely-internal traffic, it is 2,154 vs 2,893, so 43% of external buyers come back before buying |
+| Buyers with at least one visit before their first purchase | 5,210 (52%, all traffic; a visit split at midnight counts once) → attribution is worth doing. On the cleaned external journeys, 42.4% of converting journeys have more than one touch ([Process](03_process.md)) |
+| New visitors buying on a *later* visit vs first visit | 4,650 vs 4,436 (all traffic). **Corrected in Prepare:** excluding likely-internal traffic, it is 2,146 vs 2,901, so 43% of external buyers come back before buying |
 
 | Channel | Sessions | Conv. rate | Revenue |
 |---|---:|---:|---:|
@@ -105,5 +105,5 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 | 2026-09-25 | **Correction:** D2 overlaps with Google's GSP229 lab (`will_buy_on_return_visit`), contrary to the original plan. The planned "end-of-session leakage" critique was also wrong, because the lab's features are available after the first visit | Verified against the lab text; stated from memory at first |
 | 2026-09-25 | Reposition D2 as **audit and fix the lab**: replicate it, show that 53% of its training positives are likely employees, test the effect on AUC (H4), rebuild external-only with a 30-day window and PR-AUC | Turns the overlap into a critique that can be checked, rather than a lookalike |
 | 2026-09-25 | **Correction:** the lab trains on `data-to-insights.ecommerce.web_analytics`, not the public sample. The audit was re-based on that table, where referrers are unredacted: **61%** of training positives are verified employees (the 53% was a public-sample estimate) | Checked against the lab's SQL and the table itself (reports/04_analyze.md, Part A) |
-| 2026-09-25 | **Deviation from the plan:** H1's effect size is reported as relative risks, not Cramér's V. The switch was made after the test was run | With a 0.3% outcome, V stays near zero (0.05) even though the channels' rates differ by up to 270× (Analyze, Part B), so V doesn't describe the effect |
+| 2026-09-25 | **Deviation from the plan:** H1's effect size is reported as relative risks, not Cramér's V. The switch was made after the test was run | With a 0.3% outcome, V stays near zero (0.05) even though the channels' rates differ by up to about 270× in the training months (Analyze, Part B), so V doesn't describe the effect |
 | 2026-09-25 | **Change of deliverable:** D1's "% budget shift per channel" is dropped and replaced by test designs (notebook 06) | There's no cost data, and credited revenue isn't incremental, so a shift computed from it would rest on numbers that don't measure what extra spend buys |

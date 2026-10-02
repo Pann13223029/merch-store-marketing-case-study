@@ -57,7 +57,7 @@ Put it on the page with a text box: *"Excluded from every marketing figure: Goog
 | **Table** | attribution_credit | `channel`, `model`, `purchase_share`, `purchase_share_ci_low`, `purchase_share_ci_high`, `revenue_share` |
 | **Bar chart** | value_per_click | Dimension `model`; metric `value_per_click_usd`; a drop-down control on `channel` (default **Paid Search**) |
 
-Text box: *"GA's report credits a visitor's earlier campaign when they come back by bookmark. That's why it gives Organic Search 54% of purchases, where the data-driven model gives 38% if every such return was self-initiated. The over-credit is likely up to about 15 points."*
+Text box: *"GA's report credits a visitor's earlier campaign when they come back by bookmark. That's why it gives Organic Search 54% of purchases, where the data-driven model gives 38% if every such return was self-initiated. The over-credit is likely up to about 15 percentage points."*
 
 ## 5. Page 3: Retargeting break-even (interactive)
 
@@ -67,21 +67,23 @@ Add three **parameters** (Resource → Manage added data sources → retargeting
 |---|---|---:|---|
 | `Lift` | Number (decimal) | 0.10 | 0.05–0.20 |
 | `Margin` | Number (decimal) | 0.50 | 0.30–0.70 |
-| `Cost per visitor` | Number (decimal) | 0.10 | 0–2 |
+| `Cost per visitor reached` | Number (decimal) | 0.10 | 0–2 |
+
+The default lift of 10% comes from published experiments that measured it on people who actually saw an ad. So the cost to compare is the cost per visitor the ads actually reach, not per visitor in the audience.
 
 Add two **calculated fields** to retargeting_bands:
 ```
 Max affordable cost      = revenue_per_visitor * Lift * Margin
-Worth retargeting?       = CASE WHEN revenue_per_visitor * Lift * Margin >= Cost per visitor THEN "Include" ELSE "Skip" END
+Worth retargeting?       = CASE WHEN revenue_per_visitor * Lift * Margin >= Cost per visitor reached THEN "Include" ELSE "Skip" END
 ```
 
 | Element | Settings |
 |---|---|
-| **Input box or slider controls** | One per parameter, so the viewer can change the lift, margin, and their actual cost per visitor |
+| **Input box or slider controls** | One per parameter, so the viewer can change the lift, the margin, and what they actually pay per visitor reached |
 | **Bar chart** (horizontal) | Dimension `band`; metric `Max affordable cost` (MAX); sort by `band_order` ascending |
 | **Table** | `band`, `visitors_per_month`, `buy_rate`, `revenue_per_visitor`, `Max affordable cost`, `Worth retargeting?` |
 
-With the defaults, the table should match the report: the top 1% is worth **$0.61** per visitor, and bands below the top 20% are worth about a cent or less.
+With the defaults, the table should match the report: the top 1% is worth up to **$0.61** per visitor reached, and bands below the top 20% are worth about a cent or less. Like the report's band table, `retargeting_bands.csv` uses the primary population, which marks Google employees using the whole year of data. Without that hindsight the values move by a few cents and lead to the same decisions.
 
 ## 6. Share it
 
