@@ -66,7 +66,7 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 | Purchase sessions | 11,552 (1.28% conversion) |
 | Buyers / revenue | 10,022 / $1.78M |
 | Buyers with at least one visit before their first purchase | 5,210 (52%, all traffic; a visit split at midnight counts once) → attribution is worth doing. On the cleaned external journeys, 42.4% of converting journeys have more than one touch ([Process](03_process.md)) |
-| New visitors buying on a *later* visit vs first visit | 4,650 vs 4,436 (all traffic). **Corrected in Prepare:** excluding likely-internal traffic, it is 2,146 vs 2,901, so 43% of external buyers come back before buying |
+| New visitors buying on a *later* visit vs first visit | 4,637 vs 4,449 (all traffic). **Corrected in Prepare:** excluding likely-internal traffic, it is 2,146 vs 2,901, so 43% of external buyers come back before buying |
 
 | Channel | Sessions | Conv. rate | Revenue |
 |---|---:|---:|---:|
@@ -84,7 +84,7 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 
 - **No cost data.** Attribution shows credit, not ROI. Budget advice is given under explicit cost scenarios with sensitivity ranges.
 - **Cookie-based identity.** `fullVisitorId` is per browser/device, so cross-device journeys are split and multi-visit paths are undercounted.
-- **Window edges.** Journeys that began before 2016-08-01 are cut off (12,544 visitors arrive with `visitNumber > 1`). Visitors who arrive near 2017-08-01 have no time to return, so D2 uses a fixed follow-up window and excludes late arrivals.
+- **Window edges.** Journeys that began before 2016-08-01 are cut off (12,544 visitors have no visit with `visitNumber = 1`). Visitors who arrive near 2017-08-01 have no time to return, so D2 uses a fixed follow-up window and excludes late arrivals.
 - **Legacy schema.** The data comes from Universal Analytics (GA360), which was retired in 2023. The methods carry over to the GA4 BigQuery export. The Act phase will note the mapping.
 - **Public sample.** Google publishes this as a sample; it may not be the store's complete traffic.
 

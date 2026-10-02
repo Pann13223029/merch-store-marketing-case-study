@@ -109,7 +109,7 @@ Here's how I set it up:
 - **Label:** a purchase on a later visit within 30 days.
 - **Train/test split:** train on first visits Aug 2016 – Apr 2017, test on first visits May 1 – Jul 1, 2017, which were never used to choose features, settings or the model.
 
-The chart of later-purchase rates by channel leaves out the `(Other)` channel (23 training first visits, no later buyers).""")
+The chart of later-purchase rates by channel leaves out the `(Other)` channel (23 training first visits and no later buyers, as the repository's notebook 04 shows).""")
     code('''rm = add_features(remarketing_table(sessions))
 train, test = rm[rm.split == "train"], rm[rm.split == "test"]
 rm.groupby("split").agg(visitors=(LABEL, "size"), later_buyers=(LABEL, "sum"), rate=(LABEL, "mean")).style.format({"rate": "{:.3%}"})''')
@@ -198,7 +198,7 @@ per_click["Paid Search bid cap, 50% margin"] = per_click["Paid Search"] * 0.5
 per_click.style.format("${:.2f}")''')
     md("""**Paid Search:** a click is credited with **USD 1.56–2.43** under the seven rules, so at a 50% margin the break-even bid is at most **USD 0.78–1.21**, and only if every attributed sale needed the ad. In the repository, all 65 Paid Search purchases with a readable keyword were on brand keywords (the store's or Google's name), the clicks least likely to need an ad, so I'd split brand from non-brand and test brand bidding before raising bids.
 
-**Display:** without the key account, a click is credited with **USD 2.84–3.87** under every rule (GA's report put it at USD 9.08 with the account). The value is stable, but it's attribution, not incrementality. A purchase-based holdout can't detect Display's effect at about 2 credited purchases a week, so I recommend a 12-week 50/50 holdout of Display's own audience, measured on site visits (it has enough power only if that audience makes at most about 1,000–2,000 visits a week).""")
+**Display:** without the key account, a click is credited with **USD 2.84–3.87** under every rule (GA's report put it at USD 9.08 with the account, as the repository's notebook 05 shows). The value is stable, but it's attribution, not incrementality. A purchase-based holdout can't detect Display's effect at about 2 credited purchases a week, so I recommend a 12-week 50/50 holdout of Display's own audience, measured on site visits (it has enough power only if that audience makes at most about 1,000–2,000 visits a week).""")
 
     md("""## 5. Audit of Google's teaching lab (summary)
 
