@@ -104,7 +104,7 @@ def test_three_channel_labels(session):
         session("v", T0, channel="Organic Search", source="google"),
         # direct return that GA labels with the earlier campaign (source stays the campaign's)
         session("v", T0 + DAY, channel="Organic Search", source="google", is_true_direct=True),
-        # direct return whose source is literally "(direct)", still labelled with the earlier campaign by GA
+        # direct return whose source is literally "(direct)", still labeled with the earlier campaign by GA
         session("v", T0 + 2 * DAY, channel="Organic Search", source="(direct)", is_true_direct=True),
         # "(direct)" source without isTrueDirect (117k real sessions): neither relabel touches it
         session("v", T0 + 3 * DAY, channel="Organic Search", source="(direct)"),

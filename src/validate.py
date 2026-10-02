@@ -90,7 +90,7 @@ def visitor_concentration(purchases: pd.DataFrame, channel_col: str, revenue_col
                           top_n: int = 5) -> pd.DataFrame:
     """How much of each channel's revenue its largest buyers hold.
 
-    `purchases` has one row per purchase session, labelled with a channel in `channel_col`. Returns one row
+    `purchases` has one row per purchase session, labeled with a channel in `channel_col`. Returns one row
     per channel, largest revenue first: purchases, buyers, revenue, top_visitor and top_share (the largest
     buyer and their share of the channel's revenue), top_n_share (the `top_n` largest buyers together), and
     flagged: every visitor holding more than `threshold` of the channel's revenue, largest first (empty when

@@ -1,9 +1,10 @@
 """BigQuery helpers: run SQL files with a cost guard and a local parquet cache.
 
-The BigQuery sandbox allows 1 TB of query scanning per month. Every query is
-dry-run first so we see (and cap) the bytes it will scan before it runs, every job
-carries the same cap as maximum_bytes_billed so BigQuery itself refuses to bill more,
-and results are cached to data/raw/ so re-running a notebook costs nothing.
+The BigQuery sandbox allows 1 TB of query scanning per month. query() dry-runs
+each query first so we see (and cap) the bytes it will scan before it runs (execute(), used for the
+BigQuery ML scripts, skips the dry run; see its docstring), every job carries the same cap as
+maximum_bytes_billed so BigQuery itself refuses to bill more, and query() results are cached to
+data/raw/ so re-running a notebook costs nothing.
 """
 
 from __future__ import annotations

@@ -14,7 +14,8 @@ import numpy as np
 import pandas as pd
 
 from src.attribution import MODELS, Attribution
-from src.breakeven import REVENUE_CAP_USD, value_by_band
+from src.breakeven import months_spanned, value_by_band
+from src.journeys import revenue_cap
 from src.modeling import LABEL, PIPELINES, add_features
 from src.segments import EXTERNAL, is_key_account, segment
 
@@ -35,12 +36,14 @@ MODEL_LABELS = {
 def monthly_channel(sessions: pd.DataFrame) -> pd.DataFrame:
     """Sessions, purchases and revenue by month, channel (GA's label) and segment.
 
-    Segments: External, Internal (Google employees), and Key account.
+    Segments: External, Internal (Google employees), and Key account. Capped revenue caps each purchase
+    session at revenue_cap(sessions) (D-P2, $1,605.91), as in notebooks 02 and 05.
     """
+    cap = revenue_cap(sessions)
     s = sessions.assign(
         month=sessions.session_date.dt.strftime("%Y-%m-01"),   # a full date, which Looker Studio types as Date
         segment=segment(sessions),
-        revenue_capped_usd=sessions.revenue_usd.clip(upper=REVENUE_CAP_USD),
+        revenue_capped_usd=sessions.revenue_usd.clip(upper=cap),
     )
     s = s[s.month <= "2017-07-01"]   # 2017-08 holds a single day
     return (s.groupby(["month", "channel", "segment"], as_index=False)
@@ -50,9 +53,13 @@ def monthly_channel(sessions: pd.DataFrame) -> pd.DataFrame:
 
 
 def channel_profile(sessions: pd.DataFrame) -> pd.DataFrame:
-    """External traffic by channel as GA labels it (the store's own channel report), without key accounts."""
+    """External traffic by channel as GA labels it (the store's own channel report), without key accounts.
+
+    Capped revenue caps each purchase session at revenue_cap(sessions) (D-P2), computed on the full table.
+    """
+    cap = revenue_cap(sessions)
     ext = sessions[segment(sessions) == EXTERNAL]
-    p = (ext.assign(revenue_capped_usd=ext.revenue_usd.clip(upper=REVENUE_CAP_USD))
+    p = (ext.assign(revenue_capped_usd=ext.revenue_usd.clip(upper=cap))
          .groupby("channel", as_index=False)
          .agg(sessions=("session_key", "size"), visitors=("full_visitor_id", "nunique"),
               purchases=("purchased", "sum"), revenue_usd=("revenue_usd", "sum"),
@@ -105,7 +112,7 @@ def retargeting_bands(remarketing: pd.DataFrame, tuning: pd.DataFrame) -> pd.Dat
     model = PIPELINES[best.model](**best.params).fit(train, train[LABEL])
     scores = model.predict_proba(test)[:, 1]
     bands = value_by_band(test[LABEL].to_numpy(), test.revenue_30d_usd.to_numpy(), scores)
-    months = (test.session_date.max() - test.session_date.min()).days / 30.4
+    months = months_spanned(test.session_date)
     bands.insert(1, "band_order", range(1, len(bands) + 1))
     bands["visitors_per_month"] = bands.visitors / months
     bands["model"] = best.model

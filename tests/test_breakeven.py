@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.breakeven import (BANDS, CENTRAL, REVENUE_CAP_USD, breakeven_lift, max_affordable_cost, sensitivity,
-                           value_by_band, value_of_targets)
+from src.breakeven import (BANDS, CENTRAL, REVENUE_CAP_USD, breakeven_lift, max_affordable_cost, months_spanned,
+                           sensitivity, value_by_band, value_of_targets)
 
 BAND_LABELS = ["Top 1%", "1%–2%", "2%–5%", "5%–10%", "10%–20%", "20%–50%", "50%–100%"]
 
@@ -127,3 +127,43 @@ def test_value_of_targets_is_reproducible():
     a = value_of_targets(np.ones(500, dtype=int), revenue, score, months=1.0, n_boot=100, seed=7)
     pd.testing.assert_frame_equal(a, value_of_targets(np.ones(500, dtype=int), revenue, score, months=1.0,
                                                       n_boot=100, seed=7))
+
+
+def test_months_spanned_counts_both_ends():
+    # the test months: first visits May 1 – Jul 1, 2017 are 62 days, not the 61 that (max - min).days gives
+    window = pd.Series(pd.date_range("2017-05-01", "2017-07-01", freq="D")).sample(frac=1, random_state=0)
+    assert len(window) == 62
+    assert months_spanned(window) == pytest.approx(62 / 30.4)
+    ends_only = pd.Series(pd.to_datetime(["2017-05-01", "2017-07-01", "2017-05-01"]))
+    assert months_spanned(ends_only) == pytest.approx(62 / 30.4)
+    assert months_spanned(pd.Series(pd.to_datetime(["2017-05-01"]))) == pytest.approx(1 / 30.4)
+
+
+def test_months_spanned_rejects_no_dates():
+    with pytest.raises(ValueError, match="at least one date"):
+        months_spanned(pd.Series([], dtype="datetime64[ns]"))
+
+
+def test_value_by_band_rejects_an_empty_band():
+    # with 50 visitors the top 1% rounds to 0 visitors, which would give NaN rates
+    rank, score = ranked_visitors(50)
+    with pytest.raises(ValueError, match="Top 1% is empty for n=50"):
+        value_by_band(np.zeros(50, dtype=int), rank.astype(float), score, n_boot=5)
+
+
+def test_value_of_targets_rejects_no_later_buyers():
+    rank, score = ranked_visitors(1000)
+    with pytest.raises(ValueError, match="no positives"):
+        value_of_targets(np.zeros(1000, dtype=int), rank.astype(float), score, months=2.0, n_boot=5)
+
+
+def test_value_of_targets_rejects_an_empty_target():
+    rank, score = ranked_visitors(40)   # the top 1% of 40 visitors rounds to 0
+    with pytest.raises(ValueError, match="top 1% is empty for n=40"):
+        value_of_targets(np.ones(40, dtype=int), rank.astype(float), score, months=1.0, n_boot=5)
+
+
+def test_value_of_targets_rejects_a_non_positive_window():
+    rank, score = ranked_visitors(1000)
+    with pytest.raises(ValueError, match="months must be positive"):
+        value_of_targets(np.ones(1000, dtype=int), rank.astype(float), score, months=0.0, n_boot=5)

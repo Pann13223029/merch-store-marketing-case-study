@@ -104,14 +104,14 @@ class Attribution:
         w = np.ones(self.n_journeys) if journey_weights is None else journey_weights
         tw = w[self.t_journey]
         counts = np.bincount(self.t_from * self.n_states + self.t_to, weights=tw,
-                             minlength=self.n_states ** 2).reshape(self.n_states, self.n_states)
+                             minlength=self.n_states ** 2).astype(float).reshape(self.n_states, self.n_states)
         out = counts.sum(axis=1, keepdims=True)
         P = np.divide(counts, out, out=np.zeros_like(counts), where=out > 0)
         # average order value of the purchases made from each state
         is_conv = self.t_to == self.CONV
-        conv_n = np.bincount(self.t_from[is_conv], weights=tw[is_conv], minlength=self.n_states)
+        conv_n = np.bincount(self.t_from[is_conv], weights=tw[is_conv], minlength=self.n_states).astype(float)
         conv_v = np.bincount(self.t_from[is_conv], weights=(tw * self.revenue_all[self.t_journey])[is_conv],
-                             minlength=self.n_states)
+                             minlength=self.n_states).astype(float)
         value = np.divide(conv_v, conv_n, out=np.zeros_like(conv_v), where=conv_n > 0)
         base_p, base_v = self._absorption(P, value)
         conv_effect, value_effect = np.zeros(len(self.channels)), np.zeros(len(self.channels))
@@ -132,6 +132,8 @@ class Attribution:
         wc = w[self.conv_rows]
         total_conv = wc.sum()
         total_rev = (wc * self.revenue[self.conv_rows]).sum()
+        if total_conv == 0:
+            raise ValueError("no converting journeys (or all have weight 0); Markov credit is undefined")
         rows = {}
         for m in HEURISTIC_MODELS:
             conv = (self.credit[m] * wc[:, None]).sum(axis=0)

@@ -5,7 +5,7 @@ visitor-concentration check (src/validate.py:visitor_concentration) in notebook 
 
   * 1957458976293878100: one US desktop visiting on weekday office hours, 278 sessions and 16
     purchase sessions worth $128,413 (15% of outside revenue in the attribution period), up to $47,082
-    each. It was already buying before its only Display click (2017-03-10); GA then labelled its next
+    each. It was already buying before its only Display click (2017-03-10); GA then labeled its next
     15 purchases Display, which is 89% of Display's GA-credited revenue. Its purchases reflect an
     existing corporate relationship, not what Display or any other channel caused.
 """

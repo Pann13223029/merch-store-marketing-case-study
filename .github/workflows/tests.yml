@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+# least privilege: the job only reads the repository
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-24.04

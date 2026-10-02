@@ -42,7 +42,7 @@ def credit(att: Attribution, model: str, measure: str = "conversions") -> dict[s
 
 @pytest.fixture
 def toy() -> Attribution:
-    """First-order chain on the toy journeys. GA labels the "A > B" purchase session with A (a relabelled return)."""
+    """First-order chain on the toy journeys. GA labels the "A > B" purchase session with A (a relabeled return)."""
     return Attribution(journeys_frame([("A > B", True, 30.0, "A"), ("A", False, 0.0, "A"), ("B", True, 90.0, "B")]),
                        order=1)
 
@@ -340,3 +340,17 @@ def test_search_keyword_class(keyword, expected):
 
 def test_sixteen_letters_without_a_digit_are_not_an_id():
     assert search_keyword_class("merchandisestore") == "Readable, no brand"
+
+
+def test_credit_table_rejects_journeys_without_a_purchase():
+    # no converting journey: Markov credit would be 0/0, so fail with a clear message instead
+    att = Attribution(journeys_frame([("A > B", False, 0.0, "A"), ("B", False, 0.0, "B")]))
+    with pytest.raises(ValueError, match="no converting journeys"):
+        att.credit_table()
+
+
+def test_markov_removal_effects_without_a_purchase_are_zero():
+    # the transition counts are floats even with no conversion, so the removal effects are zeros, not a dtype error
+    att = Attribution(journeys_frame([("A > B", False, 0.0, "A"), ("B", False, 0.0, "B")]))
+    conv_effect, value_effect = att.markov_removal_effects()
+    assert conv_effect.tolist() == [0.0, 0.0] and value_effect.tolist() == [0.0, 0.0]

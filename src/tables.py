@@ -23,7 +23,7 @@ FIRST_VISIT_FEATURES = [
     "device_category", "operating_system", "browser", "sub_continent", "country",
     # engagement
     "hits", "pageviews", "time_on_site", "bounced",
-    # shopping behaviour
+    # shopping behavior
     "product_detail_views", "distinct_products_viewed", "add_to_cart_events",
     "checkout_events", "max_ecommerce_step",
 ]
@@ -61,6 +61,13 @@ def remarketing_table(sessions: pd.DataFrame, internal_flag: str = "visitor") ->
                      for evaluation only, never as a model feature. Shared rows keep the default table's values
                      and order; the added rows are placed by first-visit start, after any default rows starting
                      in the same second, so a ranking breaks ties the same way on both tables.
+
+    Row order and ties: rows are ordered by first-visit start (first_start). First visits that start in the same
+    second have no data-defined order: they keep the order that pandas' default (not stable) sort leaves them in,
+    starting from the visitor-id order of the grouped sessions. Score ties in a ranking then fall back to this row
+    order. A fresh clone with the pinned versions reproduced every table exactly, but other numpy builds or CPUs
+    may order the ties differently. Same-second ties are rare (2,134 test-month rows), and a 200-permutation check
+    that reshuffled them moved no headline.
     """
     if internal_flag == "visitor":
         return _first_visit_table(sessions[~sessions.is_internal], first_visit_rule=False)

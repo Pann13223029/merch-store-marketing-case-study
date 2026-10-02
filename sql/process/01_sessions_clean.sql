@@ -5,7 +5,8 @@
 --   * is_internal is flagged at the VISITOR level: any visitor who ever entered through the redacted
 --     internal referral (Referral, source "(direct)", path "/") has every session flagged.
 --   * NULL totals mean "zero" in the GA360 export (e.g. timeOnSite is NULL for single-hit sessions).
---   * City is not used (56% redacted); campaign is not used (97% not set).
+--   * City is not used (56% redacted). Keyword and campaign stay out of this table (campaign is 97% not set);
+--     the Paid Search brand/non-brand split reads them from sql/prepare/p09_paid_search_keywords.sql.
 --   * eCommerceAction.action_type: 2 = product detail view, 3 = add to cart, 5 = checkout, 6 = purchase.
 WITH sessions AS (
   SELECT

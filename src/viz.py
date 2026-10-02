@@ -2,7 +2,7 @@
 
 Follows the project's data-viz rules: reference palette on a light surface, thin marks
 (24px bars with a 4px rounded data end, 2px lines, >= 8px markers with a 2px surface ring),
-solid hairline grid, text in ink tokens (never the series colour), selective direct labels.
+solid hairline grid, text in ink tokens (never the series color), selective direct labels.
 
 Sizes are in design pixels: figures are laid out at 100 px per inch and saved at 2x.
 """
@@ -128,7 +128,7 @@ def rounded_hbar(ax, y: float, value: float, thickness_px: float = 24, radius_px
 
 
 def dot(ax, x: float, y: float, color: str, diameter_px: float = 10, ring_px: float = 2, **kw) -> None:
-    """Filled marker with a surface-coloured ring (keeps it legible over lines)."""
+    """Filled marker with a surface-colored ring (keeps it legible over lines)."""
     ax.plot([x], [y], "o", ms=px(diameter_px + 2 * ring_px), mfc=color, mec=SURFACE,
             mew=px(ring_px), zorder=4, **kw)
 
@@ -244,7 +244,7 @@ def rate_with_ci_chart(labels: list[str], rates: list[float], ci_low: list[float
     """Horizontal bars (one series) with 95% CI whiskers.
 
     Values are fractions shown as percentages unless value_fmt / tick_fmt are given (e.g. dollars).
-    Bars whose index is not in `highlight` (when given) are drawn in the de-emphasis grey.
+    Bars whose index is not in `highlight` (when given) are drawn in the de-emphasis gray.
     """
     apply_style()
     n = len(labels)
@@ -281,7 +281,7 @@ def gains_chart(curves: dict[str, tuple[np.ndarray, np.ndarray]], colors: dict[s
                 key_at: tuple[float, float] = (0.14, 0.44)):
     """Cumulative gains: share of future buyers captured vs share of visitors targeted.
 
-    curves: {label: (x_share_targeted, y_share_captured)}; a random-targeting diagonal is drawn in grey.
+    curves: {label: (x_share_targeted, y_share_captured)}; a random-targeting diagonal is drawn in gray.
     The curves converge on the right, so instead of end labels the values at `mark` are listed in a
     small key placed in the empty area under the curves (`key_at`, data coordinates).
     """
@@ -307,7 +307,7 @@ def gains_chart(curves: dict[str, tuple[np.ndarray, np.ndarray]], colors: dict[s
                 solid_capstyle="round", zorder=3)
         values[label] = float(np.interp(mark, x, y))
         dot(ax, mark, values[label], colors[label], diameter_px=8)
-    # key: values at the mark, text in ink with a coloured dot beside it
+    # key: values at the mark, text in ink with a colored dot beside it
     kx, ky = key_at
     ax.text(kx, ky, f"Buyers reached by targeting the top {mark:.0%}", ha="left", va="center",
             fontsize=px(11.5), color=INK_2, fontweight="bold")
@@ -393,8 +393,8 @@ def value_strip_chart(groups: list[str], points: dict[str, dict[str, float]], hi
                       title: str, subtitle: str, note: str, value_fmt=lambda v: f"${v:.2f}"):
     """One row per group; a dot per model on a shared value axis.
 
-    points: {group: {model_label: value}}. Models named in `highlight` ({label: colour}) are drawn in that
-    colour and labelled; all other models are grey context dots.
+    points: {group: {model_label: value}}. Models named in `highlight` ({label: color}) are drawn in that
+    color and labeled; all other models are gray context dots.
     """
     apply_style()
     n = len(groups)
