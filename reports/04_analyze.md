@@ -769,7 +769,7 @@ Any 10%, 20% or 50% holdout over 4 to 12 weeks has 5.1–6.4% power, barely abov
 | GA label (103 a week) | 29.8% / 16.9% | 203 / 292 | 4,143 (26.2% of outside visits) / **2,044 (12.9%)** |
 | Fresh ad clicks (78 a week) | 19.1% / 11.7% | 203 / 292 | 2,390 (15.1%) / 1,184 (7.5%) |
 
-Measured across all site traffic, the test would have only 17–30% power. It reaches 80% if the randomized audience makes at most about 2,000 visits a week (13% of outside traffic, allowing for repeat visitors), for example the users in Display's own audience lists rather than every site visitor.
+Measured across all site traffic, the test would have only 17–30% power. It reaches 80% only for a small audience, such as the users in Display's own audience lists rather than every site visitor. Those users return more often than average (Limitations), so the randomized audience can make at most about 500–1,000 visits a week (about 2,000 if it repeated like average outside traffic).
 
 ### 3. Recommended designs
 
@@ -779,7 +779,7 @@ Measured across all site traffic, the test would have only 17–30% power. It re
 | Primary metric | 30-day purchase rate per assigned visitor (intention to treat), with staff identified afterwards left out. Early read: 30-day return-visit rate | Site visits per assigned user, by any route. Purchases and revenue reported but not powered |
 | Split | 50/50 (retargeted / held out) | 50/50 (shown ads / held out) |
 | Duration | 12 months of enrollment, read 30 days after it closes | 12 weeks |
-| Detectable effect (80% power) | 14.0% relative lift in purchases (52% power at +10%); +10% in return visits after 1.5 months | The loss of all 103 Display-credited visits a week, if the audience makes at most 2,044 visits a week (store-wide power 17%) |
+| Detectable effect (80% power) | 14.0% relative lift in purchases (52% power at +10%); +10% in return visits after 1.5 months | The loss of all 103 Display-credited visits a week, if the audience makes at most 957 visits a week, repeating like Display's own visitors (2,044 if it repeats like average outside traffic; store-wide power 17%) |
 | Decision rule | Break-even lift = cost per retargeted visitor ÷ ($2.10 × 50% margin). Before reading the lift, check that the share of enrollees identified as staff is balanced across arms (two-proportion test, same detection window for every enrollee), and also report the result with staff included. Keep retargeting if the purchase lift's 95% CI lies above it and stop if it lies below it; this assumes the extra buyers spend like the average buyer, so check revenue per buyer by arm. Otherwise extend enrollment once, up to 24 months, and decide then, on the point estimate if the CI still straddles break-even (about 23 months gives 80% power to detect +10% against no effect, not against break-even, so a lift close to break-even may never be resolved). Early read: if return visits aren't clearly up, fix ad delivery before waiting a year. After the decision, keep a 10% holdout to monitor | If held-out users make significantly fewer visits, Display adds traffic: value the extra visits at the store's revenue per visit and compare with Display's cost. If the difference's 95% CI stays below the visits GA credits to Display, GA over-credits it: budget Display on the measured difference, not on GA's report |
 
 ### Limitations

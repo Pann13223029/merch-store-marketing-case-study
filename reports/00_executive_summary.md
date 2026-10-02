@@ -27,7 +27,7 @@ You asked where the store's next marketing dollar should go. My answer: not wher
 | Now | **Split brand from non-brand search**, and keep bids under the value ceiling ($0.78–$1.21 at most) | Paid media | $1.56–$2.43 attributed per click |
 | Now | **Review any spend on YouTube promotion and affiliates** | Paid media | ~98,000 YouTube visits in Oct–Nov 2016, no purchases; 9 affiliate sales all year |
 | Test | **Retarget only the top-scored first-time visitors**, and measure the lift with a 50/50 holdout of the top 20% for 12 months | Retargeting lead | Up to about $690–$950 a month |
-| Test | **Hold Display's budget** and run a 12-week 50/50 holdout of Display's own audience, measured on site visits (powered only if that audience makes at most about 1,000–2,000 visits a week) | Paid media | Display's ~$17k of revenue a year |
+| Test | **Hold Display's budget** and run a 12-week 50/50 holdout of Display's own audience, measured on site visits (powered only if that audience makes at most about 500–1,000 visits a week) | Paid media | Display's ~$17k of revenue a year |
 | Explore | **Retention:** email and reminders for past visitors | Head of Marketing | 34% of purchases |
 | Explore | **A direct sales path for corporate (bulk) buyers** | Head of Marketing, Sales | $248,552 of bulk purchase sessions, half of it one account |
 
@@ -37,7 +37,7 @@ For retargeting, include a score band only if reaching one of its visitors costs
 
 1. **Report employees and the key account on their own.** It's a reporting change with no spend. Until it's made, every channel number mixes in staff and one corporate buyer.
 2. **Run a 12-month 50/50 retargeting test of the top 20%.** About 9,000 top-scored first-time visitors a month would be split between retargeted and held out. The test detects a purchase lift of about 14% or more (a 10% lift has a 52% chance of being detected within a year; about 23 months gives 80%), and return visits give an early read about 2.5 months after launch (about 1.5 months of enrollment plus the 30-day follow-up). Holding out only 10% would give just a 23% chance of detecting a 10% lift within a year.
-3. **Hold Display's budget and test it on site visits for 12 weeks.** A test on purchases can't work: Display is credited with about 2 purchases a week, too few to detect an effect even if the ads caused every one. Split Display's own audience lists, not all site traffic: across the whole site the visit test has only 17–30% power. It reaches 80% only if the randomized audience (both arms together) makes at most about 1,000–2,000 visits a week and the ads cause nearly all the visits GA credits to Display.
+3. **Hold Display's budget and test it on site visits for 12 weeks.** A test on purchases can't work: Display is credited with about 2 purchases a week, too few to detect an effect even if the ads caused every one. Split Display's own audience lists, not all site traffic: across the whole site the visit test has only 17–30% power. It reaches 80% only if the randomized audience (both arms together) makes at most about 500–1,000 visits a week and the ads cause nearly all the visits GA credits to Display.
 4. **Split brand from non-brand search, and test pausing brand ads.** Purchases on brand keywords are the ones most likely to happen without the ad.
 
 ## How sure I am
