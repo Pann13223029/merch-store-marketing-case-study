@@ -28,9 +28,12 @@ MODEL_LABELS = {
     "first_touch": "First touch",
     "linear": "Linear",
     "position_based": "Position-based",
-    "markov": "Markov (data-driven)",
+    "markov": "Markov (3rd order)",
     "markov_conservative": "Markov, conservative relabel",
 }
+# src/breakeven.py's band names, as the reports write them (Analyze, Part B, §7)
+BAND_LABELS = {"1%–2%": "1–2%", "2%–5%": "2–5%", "5%–10%": "5–10%", "10%–20%": "10–20%", "20%–50%": "20–50%",
+               "50%–100%": "Bottom 50%"}
 
 
 def monthly_channel(sessions: pd.DataFrame) -> pd.DataFrame:
@@ -112,6 +115,7 @@ def retargeting_bands(remarketing: pd.DataFrame, tuning: pd.DataFrame) -> pd.Dat
     model = PIPELINES[best.model](**best.params).fit(train, train[LABEL])
     scores = model.predict_proba(test)[:, 1]
     bands = value_by_band(test[LABEL].to_numpy(), test.revenue_30d_usd.to_numpy(), scores)
+    bands["band"] = bands.band.replace(BAND_LABELS)
     months = months_spanned(test.session_date)
     bands.insert(1, "band_order", range(1, len(bands) + 1))
     bands["visitors_per_month"] = bands.visitors / months

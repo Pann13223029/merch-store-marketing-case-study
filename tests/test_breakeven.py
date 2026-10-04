@@ -19,7 +19,7 @@ def ranked_visitors(n: int, seed: int = 0) -> tuple[np.ndarray, np.ndarray]:
 
 
 def test_central_assumptions_match_the_reports():
-    # 10% lift and 50% margin in the central case; revenue capped at the $1,606 99th-percentile order (D-P2)
+    # 10% lift and 50% margin in the central case; revenue capped at the $1,606 99th-percentile purchase session (D-P2)
     assert CENTRAL == {"lift": 0.10, "margin": 0.50}
     assert REVENUE_CAP_USD == 1606
 
@@ -117,7 +117,7 @@ def test_value_of_targets_zero_lift_visitors_cost_but_add_nothing():
     staff = rank == 0
     v = value_of_targets(np.ones(100, dtype=int), revenue, score, months=1.0, targets=(0.02,), zero_lift=staff,
                          n_boot=20)
-    assert v.visitors_per_month[0] == 2                        # staff still count as remarketed visitors
+    assert v.visitors_per_month[0] == 2                        # staff still count as retargeted visitors
     assert v.revenue_per_visitor[0] == pytest.approx((0.0 + REVENUE_CAP_USD) / 2)
 
 

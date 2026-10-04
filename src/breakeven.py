@@ -1,6 +1,6 @@
-"""Break-even for remarketing (D2): what one remarketed first-time visitor is worth, by score band.
+"""Break-even for retargeting (D2): what one retargeted first-time visitor is worth, by score band.
 
-Remarketing a visitor pays off when
+Retargeting a visitor pays off when
 
     revenue per visitor (next 30 days) x incremental lift x gross margin  >=  cost per visitor reached
 
@@ -84,13 +84,13 @@ def max_affordable_cost(revenue_per_visitor, lift: float = CENTRAL["lift"], marg
 
 
 def breakeven_lift(cost_per_visitor, revenue_per_visitor, margin: float = CENTRAL["margin"]):
-    """Smallest incremental lift at which remarketing a visitor pays for its cost (the inverse of max_affordable_cost)."""
+    """Smallest incremental lift at which retargeting a visitor pays for its cost (the inverse of max_affordable_cost)."""
     return np.asarray(cost_per_visitor) / (np.asarray(revenue_per_visitor) * margin)
 
 
 def value_of_targets(y: np.ndarray, revenue: np.ndarray, score: np.ndarray, months: float, targets=TARGETS,
                      zero_lift: np.ndarray | None = None, n_boot: int = 2000, seed: int = 42) -> pd.DataFrame:
-    """Extra gross profit per month, before ad cost, from remarketing the top share of visitors by score.
+    """Extra gross profit per month, before ad cost, from retargeting the top share of visitors by score.
 
     An upper bound: the lift applies to every visitor in the target, as if the ads reach all of them.
     `months` is the length of the scored window, e.g. months_spanned(test.session_date).
@@ -98,7 +98,7 @@ def value_of_targets(y: np.ndarray, revenue: np.ndarray, score: np.ndarray, mont
     Value = capped 30-day revenue of the visitors in the target x lift x margin / months, in the central case
     (`gross_profit_per_month`), with a bootstrap 95% CI over the visitors in the target (revenue noise only) and
     the range across the LIFTS x MARGINS grid (`range_low`, `range_high`). Visitors in `zero_lift` (e.g. Google
-    employees, whom an ad can't turn into customers) add no revenue but still count as remarketed visitors.
+    employees, whom an ad can't turn into customers) add no revenue but still count as retargeted visitors.
     """
     rng = np.random.default_rng(seed)
     order = np.argsort(-score, kind="stable")

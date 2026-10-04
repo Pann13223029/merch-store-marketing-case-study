@@ -6,7 +6,7 @@ An interactive companion to the case study for the Head of Marketing. The data i
 
 | File | Rows | What it holds |
 |---|---:|---|
-| `monthly_channel.csv` | 189 | Sessions, purchases, and revenue (raw and capped) by month, channel (GA's label), and segment (External / Internal (Google employees) / Key account) |
+| `monthly_channel.csv` | 189 | Sessions, purchases, and revenue (raw and capped) by month, channel (GA's label), and segment (External / Internal (Google employees) / Key account), Aug 2016 to Jul 2017 (the single day Aug 1, 2017 is left out) |
 | `channel_profile.csv` | 8 | External traffic by channel, without the key account: sessions, visitors, purchases, conversion rate, revenue |
 | `attribution_credit.csv` | 48 | Share of purchases and revenue credited to each channel under six attribution models, with 95% bootstrap intervals that resample visitors |
 | `value_per_click.csv` | 21 | Attributed value per click: capped revenue credited per actual visit for Paid Search, Display, and Affiliates under seven attribution rules |
@@ -52,7 +52,7 @@ Put it on the page with a text box: *"Excluded from every marketing figure: Goog
 
 | Element | Data source | Settings |
 |---|---|---|
-| **Drop-down control** | attribution_credit | Control field `model`; allow multiple selections; default **GA report (last non-direct click)** and **Markov (data-driven)** |
+| **Drop-down control** | attribution_credit | Control field `model`; allow multiple selections; default **GA report (last non-direct click)** and **Markov (3rd order)** |
 | **Bar chart** (horizontal) | attribution_credit | Dimension `channel`; breakdown `model`; metric `purchase_share` (MAX, since there's one row per channel and model) |
 | **Table** | attribution_credit | `channel`, `model`, `purchase_share`, `purchase_share_ci_low`, `purchase_share_ci_high`, `revenue_share` |
 | **Bar chart** | value_per_click | Dimension `model`; metric `value_per_click_usd`; a drop-down control on `channel` (default **Paid Search**) |

@@ -1,4 +1,4 @@
-"""Remarketing model (D2): features, time-based validation, baselines, and evaluation.
+"""Retargeting model (D2): features, time-based validation, baselines, and evaluation.
 
 Population and label come from src/tables.py:remarketing_table(): external first-visit
 non-buyers; label = purchase on a later visit within 30 days of the first visit.

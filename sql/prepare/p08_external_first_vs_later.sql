@@ -1,6 +1,7 @@
 -- External (non-internal) visitors first seen inside the window: bought on first visit vs a later visit.
 -- A first visit that crosses midnight appears as two sessions with the same visitId; a purchase in the
--- after-midnight half counts as the first visit, as in the D2 label (D-P1b).
+-- after-midnight half counts as the first visit, as in the D2 label
+-- (Prepare finding 7; Process, midnight-split sessions).
 WITH s AS (
   SELECT fullVisitorId, visitId, visitNumber, visitStartTime,
          IFNULL(totals.transactions, 0) > 0 AS purchased,

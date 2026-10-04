@@ -1,7 +1,7 @@
 # Phase 4 — Analyze
 
 - **Part A: Audit of Google's lab model for D2**
-- **Part B: The corrected remarketing model and break-even audience (D2)**
+- **Part B: The corrected retargeting model and break-even audience (D2)**
 - **Part C: Which channels deserve the credit: attribution and paid-click value (D1)**
 - **Part D: Test designs for the two effects the data can't measure**
 
@@ -101,7 +101,7 @@ Model 1 (bounces and time on site only) moves the other way: 0.724 on all first 
 | Top 10% | 10,202 | 76.8% | 1,153 | 112 |
 | All first visits | 102,025 | 9.4% | 1,650 | 432 |
 
-A remarketing audience taken from the model's top ranks would be spent almost entirely on Google's own staff.
+A retargeting audience taken from the model's top ranks would be spent almost entirely on Google's own staff.
 
 The two audit variants still put employees in 59–66% of their top 1%, because employees also browse deeply and add to cart. **Removing features isn't enough; employees must be removed from the population.**
 
@@ -140,7 +140,7 @@ On external visitors, the lab model ranks about as well as its two variants. The
 
 ---
 
-## Part B — The corrected remarketing model (D2)
+## Part B — The corrected retargeting model (D2)
 
 Notebook: [notebooks/04_analyze_remarketing.ipynb](../notebooks/04_analyze_remarketing.ipynb) · Code: [`src/modeling.py`](../src/modeling.py), [`src/breakeven.py`](../src/breakeven.py)
 
@@ -278,11 +278,11 @@ The operating-system signal is real. Within North America, Mac first visits come
 | Paid Search / Direct | 11.7% / 32.9% | 3.8% / 21.9% |
 | Social | 0.3% | 6.4% |
 
-The audience follows purchase behavior: visitors outside North America almost never come back to buy, perhaps because of shipping or pricing, which the data can't show. In practice it's a **geographically narrow audience**, and the recommendation should say so openly. The low mobile share points to a mobile-experience question for the Act phase.
+The audience follows purchase behavior: visitors outside North America almost never come back to buy, perhaps because of shipping or pricing, which the data can't show. In practice it's a **geographically narrow audience**, and the recommendation should say so openly. The low mobile share leaves an open question: does the mobile experience hold buyers back?
 
 ### 7. Break-even (decision D-B2)
 
-> Remarketing pays off when revenue per visitor (next 30 days) × incremental lift × gross margin ≥ cost per visitor reached.
+> Retargeting pays off when revenue per visitor (next 30 days) × incremental lift × gross margin ≥ cost per visitor reached.
 
 Revenue per visitor is **measured**: what each score band actually spent in the 30 days after the first visit, in the test months, capped per visitor at $1,606. That is D-P2's per-purchase-session threshold applied to each visitor's 30-day total, which is stricter: capping each purchase session instead would raise the top-10% value by about 3.6%. Central assumptions are **10% lift** and **50% margin**. The lift is anchored on randomized experiments: a display-retargeting campaign lifted purchases 10.5% ([Johnson, Lewis & Nubbemeyer 2017](https://journals.sagepub.com/doi/abs/10.1509/jmr.15.0297)), and the median conversion lift (purchases, sign-ups or similar actions the advertiser defines) was 8% across the 184 of 432 Google Display Network experiments that measured conversions ([Johnson, Lewis & Nubbemeyer](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2701578)). **Both lifts were measured on people who actually saw an ad**, so the break-even cost below is per visitor the ads reach, and the monthly values assume the ads reach everyone in the audience: they're upper bounds (D-B10). Margin isn't public, so it's varied from 30% to 70%. Visitors a month are the test months' counts divided by 2.04 months (62 days, May 1 – Jul 1, at 30.4 days a month; D-B9).
 
@@ -311,7 +311,7 @@ These bands use the primary population (whole-year employee flag). Rebuilt witho
 
 ### 8. The audience without hindsight (decision D-B5)
 
-The population above leaves out Google employees with a **whole-year** flag: a visitor is internal if any session in the year arrives through the internal link. For a first-time visitor, that flag is often set by a *later* session, which a live campaign can't see when it scores the first visit. `remarketing_table(sessions, internal_flag="first_visit")` rebuilds the table with only what's knowable at scoring time, and the chosen model is refit on it in the same way. Training keeps the staff too, so their 378 later purchases are 21% of its 1,811 later buyers. Trained without them (the as-reported model), it reaches 219 of 323 real later buyers (67.8%) on the same test months, so about 3 of the 10 points over the two-line rule come from that choice (difference +2.8 pts, 95% CI −0.6 to +6.4, not significant).
+The population above leaves out Google employees with a **whole-year** flag: a visitor is internal if any session in the year arrives through the internal link. For a first-time visitor, that flag is often set by a *later* session, which a live campaign can't see when it scores the first visit. `remarketing_table(sessions, internal_flag="first_visit")` rebuilds the table with only what's knowable at scoring time, and the chosen model is refit on it in the same way. Training keeps the staff too, so they are 378 of its 1,811 later buyers (21%). Trained without them (the as-reported model), it reaches 219 of 323 real later buyers (67.8%) on the same test months, so about 3 of the 10 points over the two-line rule come from that choice (difference +2.8 pts, 95% CI −0.6 to +6.4, not significant).
 
 **Staff** are the visitors this adds back: flagged as employees only by a later session. They stay in the ranking, because nobody can remove them at scoring time. They can be identified afterwards, though, so their purchases don't count as successes and the break-even values them at zero.
 
@@ -350,7 +350,9 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 - **The value moves little:** with staff at zero lift the top 10% is worth up to about $744 a month against $692 as reported, and the top 20% up to about $948 against $918. Valuing staff like customers would overstate the top 10% by 47% ($1,095).
 - **Seven** test visitors had an internal entry *before* their first visit, so a campaign could drop them at scoring time. Doing so changes nothing at this precision (PR-AUC 0.0806, 298 later buyers in the top 10%).
 
-### What this means for D2 (carried to Act)
+### What this means for D2
+
+*These points feed the recommendations in the [README](../README.md#what-id-do-on-monday) ("What I'd do on Monday") and the [executive summary](00_executive_summary.md).*
 
 1. **Retarget only the top-scored first visits**, and include a band only if the actual cost per visitor the ads reach is below that band's affordable cost (top 1%: up to $0.61; beyond the top 20%, about a cent or less). The bands use the whole-year employee flag; without hindsight the values move by a few cents, and the 2–10% bands are worth about $0.09–$0.11 together.
 2. **The audience claim, for a live campaign:** the model's top 10% holds **71% of real later buyers** (95% CI 65–75%), against **61% for the two-line rule**. Nearly 1 in 4 of the later buyers it reaches are staff whom only a later visit reveals.
@@ -370,7 +372,7 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 | ID | Decision | Why |
 |---|---|---|
 | D-B1 | Model selection by highest mean validation PR-AUC, fixed before testing, so gradient boosting is chosen (the random forest until the fold-3 fix, D-B8). Logistic regression kept as the explainer | Avoids choosing on the test set. The families are statistically tied, so interpretability comes from the logistic model |
-| D-B2 | Break-even reported as the **maximum affordable cost per visitor reached** by score band. Central 10% lift and 50% margin; sensitivity 5–20% and 30–70% | User's decision: no invented cost figure. The Head of Marketing compares with real costs |
+| D-B2 | Break-even reported as the **maximum affordable cost per visitor reached** by score band. Central 10% lift and 50% margin; sensitivity 5–20% and 30–70% | No cost data, so no invented cost figure: the Head of Marketing compares with real costs |
 | D-B3 | Tuning grid extended until tree-model optima were interior (28 configurations) | A best result at a grid's edge may not be the true optimum |
 | D-B4 | H1 and H3 tested on training months only | Keeps the test months out of every choice of feature, setting and model |
 | D-B5 | Keep the primary analysis on the whole-year employee flag, and add an evaluation without hindsight (§8) as the live-campaign view. The audience claim and the monthly value of retargeting come from it. Per-band costs stay on the primary population, and the live view gives the same decisions (§7) | The whole-year flag uses later sessions a live campaign can't see. Staff stay in the ranking but don't count as successes, and the break-even values them at zero. Added after the first test results |
@@ -386,11 +388,11 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 
 Notebook: [notebooks/05_analyze_attribution.ipynb](../notebooks/05_analyze_attribution.ipynb) · Code: [`src/attribution.py`](../src/attribution.py), [`src/segments.py`](../src/segments.py), [`src/validate.py`](../src/validate.py)
 
-**Question:** how should the Head of Marketing shift channel budget?
+**Question:** which channels deserve the credit for purchases, and what is a paid click worth?
 **Data:** 580,759 journeys of outside visitors with 5,058 purchases (journeys ending Aug 31, 2016 – Jul 1, 2017). Google employees and one key account (§1) are left out.
 **Method:**
 - **The reference:** the store's GA channel report, which uses **last non-direct click** and relabels direct returns with the previous campaign.
-- **The comparison:** five models run on the channels visitors **actually arrived through** (D-PR1).
+- **The comparison:** five standard models (last touch, first touch, linear, position-based and a Markov chain) run on the channels visitors **actually arrived through** (D-PR1). With GA's report that makes six models; adding a conservative relabel of the Markov chain for value per click (§10) makes seven rules.
 - **What counts:** **purchases first**, revenue second, capped per purchase session at $1,606 (D-P2).
 - **Uncertainty:** 95% intervals from 1,000 bootstrap resamples of **visitors**, so all of a repeat buyer's journeys move together (D-C6).
 
@@ -430,7 +432,7 @@ Before crediting channels, I checked that no single buyer decides a channel's nu
 - **GA then labeled its next 15 purchases Display**: all return visits, 14 to 112 days after that click, worth $110,553. GA's campaign carry-over (up to 6 months) had done the same before: its sessions were labeled Organic Search from Aug 4, 2016 to Feb 2, 2017 (136 sessions), Direct until Mar 10 (46), then Display until Aug 1, 2017 (96).
 - **In the period** it made 16 purchase sessions (22 transactions) worth $128,413: **15.1% of outside revenue**, 2.7% after capping. Its largest purchase session was $47,082 (2 transactions, Apr 5, 2017).
 
-**Decision D-C5:** report the account as its own segment, like Google employees, and leave it out of the D1 journeys. Its revenue reflects an existing corporate relationship, not what Display or any other channel caused. The revenue cap stays at **$1,606** per purchase session, as set in Process with the account included; without it the 99th percentile would be $1,506. **Everything below excludes the account.**
+**Decision D-C5 (same as D-PR5 in Process):** report the account as its own segment, like Google employees, and leave it out of the D1 journeys. Its revenue reflects an existing corporate relationship, not what Display or any other channel caused. The revenue cap stays at **$1,606** per purchase session, as set in Process with the account included; without it the 99th percentile would be $1,506. **Everything below excludes the account.**
 
 **Bulk purchase sessions.** The cap applies per purchase session, and a session can hold several transactions.
 
@@ -497,7 +499,7 @@ The chain is fit on journeys ending before March 2017 and scored on the rest. A 
 
 \* More than the channel's own purchasing journeys hold (§9); not used in headlines.
 
-GA's report gives Organic Search 53.8%, more than any of the five models (30–45%). It gives Direct 32.6%, less than any of them (44–61%).
+GA's report gives Organic Search 53.8%, more than any of the five standard models (30–45%). It gives Direct 32.6%, less than any of them (44–61%).
 
 ### 6. H2: does last-click reporting under-credit the channels that start journeys?
 
@@ -637,9 +639,9 @@ Bid cap = attributed value per click × 50% gross margin × the share of attribu
 
 - **Every Paid Search purchase with a readable keyword was on a brand keyword (one naming the store or Google)**: 65 of 65. 62 name the store or its merchandise ("Google Merchandise" 29, "google merchandise store" 24, "+Google +Merchandise" 4, …), and 3 add a product ("+Google +Swag" 2, "google stickers" 1). These are **the clicks least likely to be incremental**, since many of those buyers would likely have found the organic result instead. GA records the advertiser's bidded keyword, not the user's query, and this export has no match type, so "brand search" is inferred from the keyword. The landing-page column reflects the ad's final URL: targeting clicks also land on the home page 98% of the time.
 - **But 77% of Paid Search purchases have no readable keyword** (217 of 282). 162 fall on the 142 days the export blanked source, medium and keyword, and 55 come from the "AW - Dynamic Search Ads Whole Site" campaign, whose keyword is an obfuscated ID. On the days keywords survive, brand keywords bring 65 of 120 purchases (54%) and Dynamic Search Ads the other 55.
-- **Returning visitors made 104 of the 282 purchases on a Paid Search click (37%)**, holding 52% of that revenue, although they make 23% of the clicks. And Paid Search is the only channel in 231 of the 437 buying journeys it touches (53%), so all five path-based rules, GA's report included, give it full credit there; the two Markov rules split credit from removal effects instead, yet still credit Paid Search with more purchases (341–385) than those 231 journeys hold.
+- **Returning visitors made 104 of the 282 purchases on a Paid Search click (37%)**, holding 52% of that revenue, although they make 23% of the clicks. And Paid Search is the only channel in 231 of the 437 buying journeys it touches (53%), so all five path-based rules (GA's report, last touch, first touch, linear and position-based) give it full credit there; the two Markov rules split credit from removal effects instead, yet still credit Paid Search with more purchases (341–385) than those 231 journeys hold.
 
-So a Paid Search click is credited with **$1.56–$2.43**, and at a 50% margin it breaks even below **$0.78–$1.21** only if every attributed sale needed the ad. At 50% incrementality the cap is **$0.39–$0.61**, and at 25% **$0.19–$0.30**. **Split brand from non-brand campaigns, and test brand bidding (for example, pause brand ads in a holdout) before raising bids.**
+So a Paid Search click is credited with **$1.56–$2.43**, and at a 50% margin it breaks even below **$0.78–$1.21** only if every attributed sale needed the ad. At 50% incrementality the cap is **$0.39–$0.61**, and at 25% **$0.19–$0.30**. **Split brand from non-brand campaigns, and test pausing brand ads (not yet sized) in a holdout before raising bids.**
 
 #### Display, without the key account
 
@@ -664,12 +666,14 @@ With the key account set aside, a Display click's attributed value is **$2.84–
 
 Display would get 21–26% under every rule, Paid Search 72–79%, and Affiliates 0–6% (the top of that range is the presence-flagged Markov value). The rules now agree, but agreement between attribution rules says nothing about what extra spend would buy: credited revenue is neither incremental nor marginal, and there's no cost data. **It isn't a safe basis for moving money**, which is why this analysis gives no "% budget shift per channel" (Ask, decision log).
 
-### What this means for D1 (carried to Act)
+### What this means for D1
+
+*These points feed the recommendations in the [README](../README.md#what-id-do-on-monday) ("What I'd do on Monday") and the [executive summary](00_executive_summary.md).*
 
 1. **Correct the Organic Search story.** GA's report likely over-credits Organic Search by up to about 15 points of purchases (15.5 if every direct return is self-initiated, about 13–15 at the benchmark, 1.8 on GA's own labels). Show a multi-touch view beside GA's report, with the range. Organic Search still starts 45% of buying journeys. Confidence: moderate.
 2. **Treat returning visitors as a channel.** Visitors returning directly bring about a third of purchases (34%) and 44% of capped revenue, so retention (email, reminders to past buyers) deserves its own budget line.
-3. **Keep Paid Search, but treat its attributed value as a ceiling.** Bid below $0.78–$1.21 a click at most, split brand from non-brand, and test brand bidding before raising bids.
-4. **Hold Display's budget and test it.** Its reported revenue was one existing corporate buyer. Without it, a click's attributed value is $2.84–$3.87 under every rule, and only a holdout measured on site visits can show what it adds (Part D).
+3. **Keep Paid Search, but treat its attributed value as a ceiling.** Bid below $0.78–$1.21 a click at most, split brand from non-brand, and test pausing brand ads (not yet sized) before raising bids.
+4. **Hold Display's budget and test it.** Its reported revenue was mostly one existing corporate buyer. Without it, a click's attributed value is $2.84–$3.87 under every rule, and only a holdout measured on site visits can show what it adds (Part D).
 5. **Report the key account as its own segment**, like employees: 16 purchase sessions worth $128,413, 15% of outside revenue in the period. It points to corporate demand worth a direct sales path, not to Display.
 6. **Question paid spend on Affiliates and YouTube promotion.** Neither brings meaningful purchases under any rule; if the store pays for either, the case would have to be something other than direct sales.
 
@@ -691,7 +695,7 @@ Display would get 21–26% under every rule, Paid Search 72–79%, and Affiliate
 | D-C2 | Markov revenue credit via a value-weighted removal effect (each step into a purchase carries the average order value that follows it). An intermediate path-level allocation was tried and rejected | Keeps order values where they occur. The path-level split let Direct take most of every journey it appeared in, giving Paid Search less credit than last touch |
 | D-C3 | Value per click divides by **actual arrival visits** for every model | The store pays for ad clicks. GA's session counts include relabeled return visits that cost nothing |
 | D-C4 | Hold Display's budget until a holdout measured on site visits (Part D) | Attribution can't show what Display causes, and a purchase-based holdout can't detect even the largest possible effect at Display's volume |
-| D-C5 | Report the key account (visitor `1957458976293878100`) as its own segment, like employees, and leave it out of the D1 journeys; keep the revenue cap at $1,606 | One buyer held 88.8% of Display's GA-credited revenue and was already buying before its only Display click. Keeping the cap as set in Process leaves every other purchase session capped as before |
+| D-C5 | Same as D-PR5 (Process): the key account (visitor `1957458976293878100`) is its own segment, left out of the D1 journeys, with the revenue cap kept at $1,606 | Logged once, in Process; §1 above shows the evidence (88.8% of Display's GA-credited revenue, and buying before its only Display click) |
 | D-C6 | Bootstrap intervals resample visitors, not journeys | A repeat buyer's journeys aren't independent, so they're resampled together |
 | D-C7 | Demote the conservative relabel from corroboration to one more rule in the value-per-click range | Its `(direct)` source form marks 142 export days, not a kind of visit |
 | D-C8 | Don't use the Markov values for Social and Affiliates in headlines | The chain credits them with more purchases than the journeys that contain them |
@@ -703,9 +707,9 @@ Display would get 21–26% under every rule, Paid Search 72–79%, and Affiliate
 
 Notebook: [notebooks/06_test_design.ipynb](../notebooks/06_test_design.ipynb) · Code: [`src/power.py`](../src/power.py)
 
-**Why test:** two recommendations rest on effects this observational data can't measure. The D2 break-even borrows a 10% lift from published experiments, and D1 can't tell whether Display causes the purchases GA credits to it. This part sizes both tests from the store's own volumes before anyone runs them.
+**Why test:** two recommendations rest on effects this observational data can't measure. The D2 break-even borrows a 10% lift from published experiments, and D1 can't tell whether Display causes the purchases GA credits to it. This part sizes both tests from the store's own volumes before anyone runs them. A third test, pausing brand ads (Part C), isn't sized yet.
 
-**Method:** normal approximation, two-sided test at α = 5% with 80% power (z\* = 2.80). Per-visitor metrics use the rates of the test months (May–June 2017) and are read 30 days after enrollment closes. Per-visitor tests use the holdout's variance for both arms (for a rate p, σ = √(p(1 − p))). This is slightly optimistic for a positive lift: the standard unpooled two-proportion test gives a 12-month MDE of about 14.4% (not 14.0%), 50% power at +10% (not 52%) and about 24.5 months to 80% (not 23.4). Weekly counts use a Poisson model, with a variance-inflation factor for visitors who come back repeatedly. The analysis is intention to treat: everyone assigned counts, whether an ad reached them or not, and a cost "per retargeted visitor" is spend divided by every visitor assigned to the retargeted arm.
+**Method:** normal approximation, two-sided test at α = 5% with 80% power (z\* = 2.80). Per-visitor metrics use the rates of the test months (May 1 – Jul 1, 2017) and are read 30 days after enrollment closes. Per-visitor tests use the holdout's variance for both arms (for a rate p, σ = √(p(1 − p))). This is slightly optimistic for a positive lift: the standard unpooled two-proportion test gives a 12-month MDE of about 14.4% (not 14.0%), 50% power at +10% (not 52%) and about 24.5 months to 80% (not 23.4). Weekly counts use a Poisson model, with a variance-inflation factor for visitors who come back repeatedly. The analysis is intention to treat: everyone assigned counts, whether an ad reached them or not, and a cost "per retargeted visitor" is spend divided by every visitor assigned to the retargeted arm.
 
 ### 1. Retargeting holdout (D2)
 
@@ -789,7 +793,7 @@ Measured across all site traffic, the test would have only 17–30% power. It re
 - **Power is against no effect.** The chance the decision rule reaches a verdict depends on how far the true lift is from break-even, so near break-even the test is often inconclusive.
 - **Two reads.** If the 12-month read is inconclusive, the rule reads again at the end of the extension without adjusting the 95% CI, so the chance of a wrong keep or stop call at break-even is about 8% (about 4% in each direction), not 5%. Pre-set boundaries, such as O'Brien-Fleming, would hold it at 5%.
 - **Purchases stand in for revenue.** The decision rule compares a purchase-rate lift with a break-even computed on revenue, which assumes the extra buyers spend like the average buyer. Spend per buyer is skewed (top 20%: mean $143, median $62), so if the extra buyers spend half the average, break-even at $0.10 per visitor rises from 9.5% to 19%. Report revenue per buyer by arm as a check.
-- **The Display test's power depends on the audience's size**, which only the ad platform can report. The 2,044-visit limit assumes the audience repeats like average outside traffic (VIF 2.05, weeks 40–51). Targeted audiences in this data repeat more (VIF about 4.5 for Display's own visitors or a list of past visitors, about 8 for a list fixed in advance), which lowers the limit to about 960–560 visits a week. The power also assumes every credited visit is incremental: at half that effect, power at the limit falls to about 29%.
+- **The Display test's power depends on the audience's size**, which only the ad platform can report. The 2,044-visit limit assumes the audience repeats like average outside traffic (VIF 2.05, weeks 40–51). Targeted audiences in this data repeat more. At a VIF of about 4.5 (Display's own visitors, or past visitors) the limit is about 960 visits a week counting every GA-credited visit, or about 560 counting only fresh ad clicks: about 500–1,000. A list fixed in advance repeats even more (VIF about 8), which lowers it to about 560 (330 for fresh ad clicks). The power also assumes every credited visit is incremental: at half that effect, power at the limit falls to about 29%.
 
 ### Decision log
 

@@ -14,9 +14,9 @@ Affiliates,Linear,0.0042,10549
 Paid Search,Position-based,1.8073,17575
 Display,Position-based,2.8996,3282
 Affiliates,Position-based,0.0037,10549
-Paid Search,Markov (data-driven),2.0091,17575
-Display,Markov (data-driven),3.2829,3282
-Affiliates,Markov (data-driven),0.268,10549
+Paid Search,Markov (3rd order),2.0091,17575
+Display,Markov (3rd order),3.2829,3282
+Affiliates,Markov (3rd order),0.268,10549
 Paid Search,"Markov, conservative relabel",2.4269,17575
 Display,"Markov, conservative relabel",3.8012,3282
 Affiliates,"Markov, conservative relabel",0.0729,10549

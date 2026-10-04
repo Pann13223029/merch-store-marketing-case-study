@@ -2,7 +2,7 @@
 
 Input is data/processed/journeys.parquet (src/journeys.py): one row per journey of external
 visitors, with the channel path three ways (arrival / conservative / GA labels), the outcome, and
-revenue capped per order at the 99th percentile (D-P2).
+revenue capped per purchase session at the 99th percentile (D-P2).
 
 Models (credit per purchase sums to 1):
   ga_last_click   GA's own report: the channel GA assigned to the purchase session

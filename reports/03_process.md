@@ -63,15 +63,15 @@ Journeys built from `channelGrouping` would already contain GA's last-non-direct
 
 The lab trains on a different table (`data-to-insights.ecommerce.web_analytics`), so its audit uses that table directly, with the lab's own SQL and BigQuery ML. See [reports/04_analyze.md](04_analyze.md), Part A. An earlier public-sample version of the lab's table was removed: it was an estimate on the wrong data, and it grouped rows slightly differently from the lab's SQL.
 
-### D2 model: corrected remarketing table (`remarketing_table`)
+### D2 model: corrected retargeting table (`remarketing_table`)
 
 | Rule | Why |
 |---|---|
-| External visitors only | Marketing can't remarket to employees |
-| First visit did **not** purchase | Remarketing targets visitors who left without buying |
-| Label = purchase on a **later** visit within **30 days** | A fixed window matching the remarketing decision; captures 88.5% of later-visit purchases (1,900 of 2,146; Prepare finding 7) |
+| External visitors only | Marketing can't retarget employees |
+| First visit did **not** purchase | Retargeting targets visitors who left without buying |
+| Label = purchase on a **later** visit within **30 days** | A fixed window matching the retargeting decision; captures 88.5% of later-visit purchases (1,900 of 2,146; Prepare finding 7) |
 | First visit on or before 2017-07-01 | Every 30-day window is fully inside the data |
-| Same train/test months as the lab | So the models can be compared directly |
+| Same train/test months as the lab (plus Jul 1) | So the models can be compared directly |
 
 | Split | Visitors | Buyers within 30 days | Rate | 30-day revenue |
 |---|---:|---:|---:|---:|
@@ -111,7 +111,7 @@ The most common arrival paths of converting journeys are a single Organic Search
 | ID | Decision | Why |
 |---|---|---|
 | D-PR1 | Journeys use the arrival channel (isTrueDirect → Direct); last-click baseline uses GA labels. The conservative relabel was planned as a sensitivity check; since its `(direct)` form turned out to mark export days, it's kept only as one more rule in the value-per-click range | GA's session labels already carry last-non-direct-click credit |
-| D-PR2 | D2 population = external first-visit non-buyers; label = later-visit purchase within 30 days; first visits on or before 2017-07-01 | Matches the remarketing decision; removes internal traffic and window bias |
+| D-PR2 | D2 population = external first-visit non-buyers; label = later-visit purchase within 30 days; first visits on or before 2017-07-01 | Matches the retargeting decision; removes internal traffic and window bias |
 | D-PR3 | D2 train/test split uses the lab's months (train through 2017-04-30, test 2017-05 – 2017-06 plus 2017-07-01: 62 days, so per-month figures divide by 62 / 30.4 months) | Lets the models be compared directly; out-of-time test |
 | D-PR4 | Journeys: 30-day inactivity or purchase ends a journey; 30-day lookback; period 2016-08-31 – 2017-07-01 | Complete lookback and follow-up for every journey |
 | D-PR5 | Leave the key account (visitor `1957458976293878100`, [`src/segments.py`](../src/segments.py)) out of the D1 journeys and report it as its own segment, like employees. Keep the revenue cap at $1,606, as set with the account included | One outside buyer held 89% of Display's GA-credited revenue and was already buying before its only Display click (Analyze, Part C). Without it the 99th percentile would fall to $1,506; keeping the cap leaves every other purchase session capped as before |

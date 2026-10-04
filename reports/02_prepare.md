@@ -84,9 +84,9 @@ External visitors first seen in the window who bought (n = 5,047):
 |---|---:|---:|---:|---:|---:|---:|
 | Cumulative % | 57.5% | 85.6% | 90.2% | **95.1%** | 97.8% | 99.0% |
 
-A **30-day window captures 95% of these first purchases** (counting those made on the first visit) and matches GA's default attribution lookback. For purchases made on a *later* visit, which the remarketing label targets, it captures 88.5% (1,900 of 2,146; finding 7).
+A **30-day window captures 95% of these first purchases** (counting those made on the first visit) and matches GA's default attribution lookback. For purchases made on a *later* visit, which the retargeting label targets, it captures 88.5% (1,900 of 2,146; finding 7).
 
-### 7. Corrected sizing for the remarketing model (D2)
+### 7. Corrected sizing for the retargeting model (D2)
 
 | External new visitors | Returned at least once | Bought on first visit | Bought on a later visit | …within 30 days |
 |---:|---:|---:|---:|---:|
@@ -104,7 +104,7 @@ A purchase in the after-midnight half of a split first visit counts as the first
 
 | ID | Decision | Why |
 |---|---|---|
-| D-P1 | Treat likely-internal traffic as a separate segment, **flagged at the visitor level**. Keep it in store-wide totals and exclude it from attribution (D1) and the remarketing model (D2) | Marketing can't buy employee visits. Leaving them in would make "Referral" look like the best channel. Visitor-level flagging stops their later direct visits from inflating Direct |
+| D-P1 | Treat likely-internal traffic as a separate segment, **flagged at the visitor level**. Keep it in store-wide totals and exclude it from attribution (D1) and the retargeting model (D2) | Marketing can't buy employee visits. Leaving them in would make "Referral" look like the best channel. Visitor-level flagging stops their later direct visits from inflating Direct |
 | D-P1a | Internal rule = `channelGrouping = 'Referral' AND source = '(direct)' AND referralPath = '/'` | Covers 97.5% of redacted-referral sessions, with 65.8% from Google office cities. The remaining paths are too small to matter. Later verified against unredacted referrers: 99.2% precision, 98.2% of employee purchases caught (D-A1) |
 | D-P1b | Session key = `(fullVisitorId, visitId, visitStartTime)` | The 898 "duplicates" are midnight-split sessions, not errors |
 | D-P1c | `timeOnSite` NULL → 0; city not used; channel-level (not campaign-level) analysis; keyword and campaign read only by the separate Paid Search extract (p09) | See completeness table |

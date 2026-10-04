@@ -6,7 +6,7 @@ BigQuery SQL · BigQuery ML · Python (pandas, scikit-learn, statsmodels)
 
 **Taken at face value, Google's online merch store runs on referral traffic. It doesn't.** 41% of its revenue comes from Google's own employees, clicking through from an internal link that the public data hides as "Referral". Google's own teaching lab on this data didn't catch it either: 98.8% of the "likely buyers" at the top of its model are Google staff.
 
-That was the first surprise in a year of the store's analytics (Aug 2016 – Aug 2017, 903,653 visits in BigQuery). The two questions that matter to its marketing team, which channels deserve the budget and which visitors are worth paying to bring back, only made sense once those visitors were set aside.
+That was the first surprise in a year of the store's analytics (Aug 2016 – Aug 2017, 903,653 sessions in BigQuery). The two questions that matter to its marketing team, which channels deserve the budget and which visitors are worth paying to bring back, only made sense once those visitors were set aside.
 
 ## Why I did this
 
@@ -114,7 +114,7 @@ Scored at their first visit, the top 10% of first-time visitors held 71% of the 
 
 ## What I'd do on Monday
 
-Four things can start now, two need a test first, and two are worth exploring.
+Four things can start now, two need a test first, and two are worth exploring. A third test, pausing brand ads, should follow the brand/non-brand split, but it isn't sized yet.
 
 | When | Action | Owner | At stake |
 |---|---|---|---|
@@ -122,7 +122,7 @@ Four things can start now, two need a test first, and two are worth exploring.
 | Now | Show a multi-touch view beside GA's channel report, with the Organic Search range | Head of Marketing, Finance | Up to ~15 points of purchase credit |
 | Now | Split brand from non-brand search, and keep bids under the value ceiling ($0.78–$1.21 at most) | Paid media | $1.56–$2.43 attributed per click |
 | Now | Review any spend on YouTube promotion and affiliates | Paid media | ~98,000 YouTube visits in Oct–Nov 2016, no purchases; 9 affiliate sales all year |
-| Test | Retarget only the top-scored first-time visitors, and measure the lift with a 50/50 holdout of the top 20% for 12 months | Retargeting lead | Up to about $690–$950 a month |
+| Test | Retarget only the top-scored first-time visitors, and measure the lift with a 50/50 holdout of the top 20% for 12 months | Retargeting lead | Up to about $690 (top 10%) to $950 (top 20%) a month |
 | Test | Hold Display's budget and run a 12-week 50/50 holdout of Display's own audience, measured on site visits (powered only if that audience makes at most about 500–1,000 visits a week) | Paid media | Display's ~$17k of revenue a year |
 | Explore | Retention: email and reminders for past visitors | Head of Marketing | 34% of purchases |
 | Explore | A direct sales path for corporate (bulk) buyers | Head of Marketing, Sales | $248,552 of bulk purchase sessions, half of it one account |
@@ -227,9 +227,9 @@ Then run `notebooks/01` → `06` in order.
 
 ## Limitations and ethics
 
-- **Attribution isn't causal.** Attribution models describe the paths people took, not what each channel caused, and the retargeting lift is borrowed from published experiments. Notebook 06 sizes the holdout tests that would measure both.
+- **Attribution isn't causal.** Attribution models describe the paths people took, not what each channel caused, and the retargeting lift is borrowed from published experiments. Notebook 06 sizes two holdout tests, for retargeting and Display; a test pausing brand ads (for Paid Search) isn't sized yet.
 - **Paid Search incrementality is unknown.** Its attributed value is a ceiling only for sales within the click's own 30-day journey (later repeat purchases by buyers the ad brought in aren't counted), and 77% of its purchases have no readable keyword, so the brand share can't be measured in full.
-- **The key-account exclusion is a judgment.** It's documented (Analyze, Part C, decision D-C5), and the account is reported as its own segment rather than dropped.
+- **The key-account exclusion is a judgment.** It's documented (Process, decision D-PR5; Analyze, Part C), and the account is reported as its own segment rather than dropped.
 - **Data gaps.** There's no ad-cost data, visitors are identified per device, and the data is 2016–17 Universal Analytics. The methods carry over to GA4's BigQuery export.
 - **Margin.** The 50% gross margin is applied to revenue that includes tax and shipping, which overstates gross profit somewhat.
 - **Privacy.** The data is anonymized by Google. Recommendations assume retargeting reaches only visitors who consented. The retargeting audience is 98% North American because that's where buyers are, and the report says so openly.

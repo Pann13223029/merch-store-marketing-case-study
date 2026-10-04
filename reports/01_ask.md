@@ -3,14 +3,14 @@
 ## Business task
 
 > **The Google Merchandise Store's Head of Marketing must decide how to allocate next quarter's budget.**
-> Identify which channels actually *create* buyers compared with what last-click reporting credits them for, and define a remarketing audience of first-time visitors worth paying to bring back.
+> Identify which channels actually *create* buyers compared with what last-click reporting credits them for, and define a retargeting audience of first-time visitors worth paying to bring back.
 
 The deliverable is a **budget recommendation**, not a model. Every analysis below exists to support one of two decisions:
 
 | Decision | Question it answers | Output |
 |---|---|---|
-| **D1 — Channel budget** | Which channels are over- or under-credited by last-click reporting? | Channel credit under 5 attribution models → % budget shift per channel, under stated cost assumptions (replaced by test designs; see the note under the success criteria) |
-| **D2 — Remarketing audience** | Which first-time visitors are worth paying to bring back? | Audit of Google's own lab model for this question → corrected propensity model → break-even cutoff → audience size and expected revenue |
+| **D1 — Channel budget** | Which channels are over- or under-credited by last-click reporting? | Channel credit under 5 attribution models (final: six models, seven rules) → % budget shift per channel, under stated cost assumptions (replaced by test designs; see the note under the success criteria) |
+| **D2 — Retargeting audience** | Which first-time visitors are worth paying to bring back? | Audit of Google's own lab model for this question → corrected propensity model → break-even cutoff → audience size and expected revenue |
 
 ## Stakeholders
 
@@ -18,9 +18,9 @@ The deliverable is a **budget recommendation**, not a model. Every analysis belo
 |---|---|---|
 | **Head of Marketing** (primary) | Owns the total budget; makes both decisions | A clear recommendation with $ impact and confidence |
 | Paid media manager | Executes channel spend (Paid Search, Display, Affiliates) | Which channels to scale up or down |
-| CRM / remarketing lead | Runs remarketing audiences in Google Ads | Audience definition, size, and a score cutoff |
+| Retargeting lead | Runs retargeting audiences in Google Ads | Audience definition, size, and a score cutoff |
 | Finance | Approves budget shifts | Assumptions stated explicitly; ranges, not point estimates |
-| Web analytics team | Owns GA tracking | Data caveats and tracking fixes (Act phase) |
+| Web analytics team | Owns GA tracking | Data caveats and tracking fixes |
 
 ## Guiding questions
 
@@ -30,14 +30,14 @@ The deliverable is a **budget recommendation**, not a model. Every analysis belo
 3. How does each channel's credit change from **last-click** to **first-touch, linear, position-based, and data-driven (Markov chain)** attribution?
 4. Given plausible cost assumptions, which reallocation would most increase attributed revenue — and how sensitive is that to the assumptions?
 
-**D2 — Remarketing audience (starting from Google's lab)**
+**D2 — Retargeting audience (starting from Google's lab)**
 
 Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQuery ML* (GSP229), models this question with the label `will_buy_on_return_visit`, reaching 0.91 ROC-AUC. D2 audits that model and then builds a version ready for a real decision.
 
 5. **Audit:** How much of the lab model's performance depends on Google employees, who make up 61% of its training positives (verified on the lab's own table)?
 6. What first-visit signals (channel, device, geography, engagement, product interest) predict an external visitor's purchase on a *later* visit within 30 days?
 7. How well does the corrected model rank visitors compared with a simple rule (e.g. "viewed a product page") and with the lab model, measured by PR-AUC and top-decile lift instead of ROC-AUC?
-8. At what score cutoff does remarketing break even, and how many visitors and how much revenue does that audience cover?
+8. At what score cutoff does retargeting break even, and how many visitors and how much revenue does that audience cover?
 
 ## Hypotheses (formally tested in Analyze)
 
@@ -85,13 +85,13 @@ Google's own lab, *Predict Visitor Purchases with a Classification Model in BigQ
 - **No cost data.** Attribution shows credit, not ROI. Budget advice is given under explicit cost scenarios with sensitivity ranges.
 - **Cookie-based identity.** `fullVisitorId` is per browser/device, so cross-device journeys are split and multi-visit paths are undercounted.
 - **Window edges.** Journeys that began before 2016-08-01 are cut off (12,544 visitors have no visit with `visitNumber = 1`). Visitors who arrive near 2017-08-01 have no time to return, so D2 uses a fixed follow-up window and excludes late arrivals.
-- **Legacy schema.** The data comes from Universal Analytics (GA360), which was retired in 2023. The methods carry over to the GA4 BigQuery export. The Act phase will note the mapping.
+- **Legacy schema.** The data comes from Universal Analytics (GA360), which was retired in 2023. The methods carry over to the GA4 BigQuery export.
 - **Public sample.** Google publishes this as a sample; it may not be the store's complete traffic.
 
 ## Ethics and privacy
 
 - The data is anonymized by Google, with no PII. Visitor IDs are hashed.
-- Remarketing requires user consent (GDPR / Consent Mode). The recommendation assumes only consented users are targeted.
+- Retargeting requires user consent (GDPR / Consent Mode). The recommendation assumes only consented users are targeted.
 - Audience rules based on geography or device can exclude groups unintentionally. The D2 audience will be checked for how it is composed across countries and devices.
 
 ## Decision log
