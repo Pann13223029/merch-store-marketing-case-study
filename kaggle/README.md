@@ -4,10 +4,10 @@
 
 [`merch_store_marketing_case_study.ipynb`](merch_store_marketing_case_study.ipynb) is a single, self-contained version of the case study for Kaggle. It downloads the clean session table from BigQuery's public Google Analytics sample. It then reruns three analyses:
 - the segments: Google employees (41% of revenue) and the key account, one corporate buyer reported on its own;
-- the retargeting model against a funnel rule, a two-line rule, and the lab's features, with its break-even and monthly value (D2);
+- the retargeting model against a funnel rule, a two-line rule, and the lab's features, then refit and scored the way a live campaign would score first-time visitors (no hindsight about who is an employee), with its break-even and monthly value (D2);
 - the attribution comparison, with the Organic Search gap and the attributed value of a paid click (D1).
 
-Its helper cells are this repository's `src/` modules, copied in by the build script ([`build_notebook.py`](build_notebook.py)), so its results match the full notebooks; [`tests/test_kaggle_notebook.py`](../tests/test_kaggle_notebook.py) fails if the committed copy falls behind the builder. On Kaggle, other library versions can move a few model figures slightly (for example, the top-20% value can differ by about $2 a month). Four parts are summarized rather than re-run, to keep it short: the audit of Google's BigQuery ML lab (recreating BigQuery ML models needs your own Google Cloud project), the retargeting evaluation without hindsight, the range of the Organic Search over-credit, and the test designs (notebooks 03–06).
+Its helper cells are this repository's `src/` modules, copied in by the build script ([`build_notebook.py`](build_notebook.py)), so its results match the full notebooks; [`tests/test_kaggle_notebook.py`](../tests/test_kaggle_notebook.py) fails if the committed copy falls behind the builder. On Kaggle, other library versions can move a few model figures slightly (for example, the top-20% value can differ by about $2 a month). Four parts are summarized rather than re-run, to keep it short: the audit of Google's BigQuery ML lab (recreating BigQuery ML models needs your own Google Cloud project), the monthly value with staff valued at zero (the top of each range), the range of the Organic Search over-credit, and the test designs (notebooks 03–06).
 
 ## Publish it on Kaggle
 

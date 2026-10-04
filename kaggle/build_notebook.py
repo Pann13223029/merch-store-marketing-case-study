@@ -50,8 +50,8 @@ It's a condensed, runnable version of my full project on the Google Analytics 36
 
 **What you'll see:**
 1. **The employees, and one buyer who needs a segment of its own.** About 41% of the store's revenue comes from Google staff, and one outside corporate buyer (the key account) decides Display's numbers alone. I report both on their own before any marketing analysis.
-2. **Retargeting:** with employees flagged using the whole year of visits, a model trained on outside visitors puts 68% of later buyers in its top 10% of first-time visitors, against 61% for a two-line rule (North America first, then how far the visit got). Refit and scored without that hindsight, as a live campaign would be, it reaches 71% of real later buyers (section 3). The top 10% is worth only up to about USD 690–745 a month in extra gross profit, if the ads reach everyone in the audience (before ad costs).
-3. **Attribution:** the store's GA report likely over-credits Organic Search by up to about 15 points of purchases. A Paid Search click's attributed value is a ceiling, and without the key account Display's is stable.
+2. **Retargeting:** scored the way a live campaign would score them, the model's top 10% of first-time visitors holds 71% of the outside customers who bought within the next 30 days, against 61% for a two-line rule (North America first, then how far the visit got). But the top 10% is worth only up to about USD 690–745 a month in extra gross profit, if the ads reach everyone in the audience (before ad costs).
+3. **Attribution:** the store's GA report likely over-credits Organic Search by up to about 15 points of purchases. A Paid Search click's attributed value is a ceiling, so I'd split brand from non-brand search and test pausing brand ads (not yet sized). Without the key account, Display's value is stable.
 
 I also audited **Google's BigQuery ML teaching lab** for this question, and its published 0.91 turned out to be inflated by employees. That audit needs your own Google Cloud project, so I summarize it at the end rather than re-run it here.""")
 
@@ -94,7 +94,7 @@ checks''')
 
 In the public data, employees' visits look like `Referral` traffic with the source hidden, and most come from Google office cities. Google's training copy of this data shows the real source, `mall.googleplex.com` (the employee store link). Checked against it, my flag is 99.2% precise and catches 98.2% of employee purchases (details in the repository).
 
-I also report one outside visitor on its own (`KEY_ACCOUNTS` above): a corporate buyer, 278 visits from one office desktop, that was already buying before its only Display click, and whose next 15 purchases GA's campaign carry-over then labeled Display. **From here on, every analysis uses outside visitors only, without the key account.**""")
+I also report one outside visitor on its own (`KEY_ACCOUNTS` above): a corporate buyer, 278 visits on weekdays in office hours, that was already buying before its only Display click, and whose next 15 purchases GA's campaign carry-over then labeled Display. **From here on, every analysis uses outside visitors only, without the key account.**""")
     code('''summary = sessions.assign(segment=segment(sessions)).groupby("segment").agg(
     visitors=("full_visitor_id", "nunique"), sessions=("session_key", "size"),
     purchase_sessions=("purchased", "sum"), revenue_usd=("revenue_usd", "sum"))
@@ -126,24 +126,43 @@ rate_with_ci_chart(list(g.index), g.rate.tolist(), g.lo.tolist(), g.hi.tolist(),
     note=f"First visits Aug 2016 – Apr 2017 (n = {g.n.sum():,}). Chi-square: χ² = {chi2:,.0f}, df = {dof}, p < 0.001. Google employees excluded.");''')
 
     md("""**The model:** I use gradient boosting with the settings that won time-based tuning in the repository (28 configurations; learning rate 0.02, 4-leaf trees, minimum leaf size 1,000), and compare it with two rules that need no model (the funnel rule, and a **two-line rule**: North American first visits first, then the funnel rule) and with the feature set of Google's own lab, refit on this corrected data.""")
-    code(f'''scores = {{"Funnel rule": funnel_rule_score(test),
+    code(f'''model = boosting_pipeline({boosting_args}).fit(train, train[LABEL])
+scores = {{"Funnel rule": funnel_rule_score(test),
           "Two-line rule": funnel_geo_rule_score(test),
           "Lab's features, refit": lab_features_pipeline().fit(train, train[LABEL]).predict_proba(test)[:, 1],
-          "My model (gradient boosting)": boosting_pipeline({boosting_args})
-                                               .fit(train, train[LABEL]).predict_proba(test)[:, 1]}}
+          "My model (gradient boosting)": model.predict_proba(test)[:, 1]}}
 y = test[LABEL].to_numpy()
 pd.DataFrame({{k: ranking_metrics(y, s) for k, s in scores.items()}}).T.style.format(
     {{"pr_auc": "{{:.3f}}", "roc_auc": "{{:.3f}}", "precision_top_1pct": "{{:.1%}}", "lift_top_1pct": "{{:.1f}}x",
      "lift_top_5pct": "{{:.1f}}x", "lift_top_10pct": "{{:.1f}}x", "recall_top_10pct": "{{:.1%}}"}})''')
-    code('''colors = {"My model (gradient boosting)": SERIES_1, "Lab's features, refit": "#eb6834", "Funnel rule": "#1baf7a"}
-reach = top_share_recall(y, scores["My model (gradient boosting)"], 0.10)
-gains_chart({k: cumulative_gains(y, scores[k]) for k in colors}, colors,
-    title=f"The model's top 10% of first-time visitors reaches {reach:.0%} of later buyers",
-    subtitle="Share of later buyers captured by targeting the highest-scored first visits",
-    note=f"Out-of-time test: first visits May 1 – Jul 1, 2017 ({len(test):,} outside visitors, {int(y.sum())} later buyers). "
-         "The two-line rule is in the table above.");''')
+    md("""**Scored as a live campaign would score them.** The table above leaves out every visitor whom any visit in the year marks as an employee. For a first-time visitor, that flag often comes from a later visit, which a live campaign can't see when it scores the first one. So I rebuild the table with only what's knowable at scoring time (`internal_flag="first_visit"`): a visitor is left out only if the first visit itself comes through the internal link. I refit the model on it with the same settings and months. **Staff**, the employees whom only a later visit reveals, stay in training and in the ranking, but their purchases don't count as later buyers, because an ad can't turn them into customers.""")
+    code(f'''live = add_features(remarketing_table(sessions, internal_flag="first_visit"))
+train_live, test_live = live[live.split == "train"], live[live.split == "test"]
+staff = test_live.is_internal.to_numpy()        # flagged as employees only by a later visit: for evaluation only
+y_live = test_live[LABEL].to_numpy()
+y_real = y_live * ~staff                        # real later buyers: staff purchases don't count
+m = "My model (gradient boosting)"
+live_scores = {{m: boosting_pipeline({boosting_args})
+                    .fit(train_live, train_live[LABEL]).predict_proba(test_live)[:, 1],
+               "Two-line rule": funnel_geo_rule_score(test_live),
+               "Funnel rule": funnel_rule_score(test_live),
+               "My model trained without staff, as first reported": model.predict_proba(test_live)[:, 1]}}
+n_real = int(y_real.sum())
+reached = {{k: top_share_count(y_real, s, 0.10) for k, s in live_scores.items()}}
+for k, count in reached.items():
+    print(f"{{k}}: {{count}} of {{n_real}} real later buyers in the top 10% ({{count / n_real:.0%}})")
+all_reached, staff_reached = (top_share_count(yy, live_scores[m], 0.10) for yy in (y_live, y_live * staff))
+print(f"Staff are {{staff_reached}} of the {{all_reached}} later buyers the model's top 10% reaches ({{staff_reached / all_reached:.0%}})")
 
-    md("""The model clearly beats the funnel rule, but a two-line rule gets most of the way (`recall_top_10pct` in the table): what the model mainly adds is a sharper top of the ranking. One caveat my red-team review caught: this population leaves out employees using the whole year of visits, which is hindsight a live campaign doesn't have. Refit and scored without it in the repository (employees whom only a later visit reveals stay in training), the model's top 10% holds 71% of real later buyers against 61% for the two-line rule, and those employees are 23% of the buyers it reaches.
+colors = {{m: SERIES_1, "Two-line rule": "#eda100", "Funnel rule": "#1baf7a"}}
+gains_chart({{k: cumulative_gains(y_real, live_scores[k]) for k in colors}}, colors,
+    title=f"The model's top 10% reaches {{reached[m] / n_real:.0%}} of later buyers; a two-line rule reaches "
+          f"{{reached['Two-line rule'] / n_real:.0%}}",
+    subtitle="Share of real later buyers (a purchase within 30 days, staff not counted) captured by the highest-scored first visits",
+    note=f"Out-of-time test, scored as a live campaign would: first visits May 1 – Jul 1, 2017 ({{len(test_live):,}} first-time visitors, "
+         f"{{n_real}} real\\nlater buyers). Staff stay in the ranking; their purchases don't count. Model refit with staff kept in training.");''')
+
+    md("""The model clearly beats the funnel rule, and the two-line rule by about 10 points of real later buyers (95% CI 4.5–15 in the repository). What it mainly adds is a sharper top of the ranking: its PR-AUC edge over the rule isn't significant. Part of the 71% comes from keeping staff in training. Trained without them, as first reported, the model reaches 68% of the same buyers (the fourth line printed above). And staff are nearly 1 in 4 of the later buyers its top 10% reaches. Retargeting can't cause their purchases, so they count as reach, not value.
 
 **Break-even:** is a visitor worth retargeting? Only if revenue per visitor over the next 30 days × incremental lift × gross margin is at least the cost per visitor the ads actually reach. I measure revenue per visitor on the test months, take a 10% lift anchored on randomized experiments (8–10.5%) that measured it on people who actually saw an ad, and assume a 50% margin.""")
     code('''model_score = scores["My model (gradient boosting)"]
@@ -210,6 +229,8 @@ Fine for teaching; remove internal traffic before targeting.
 
 ## 6. What I'd do
 
+Four things can start now, two need a test first, and two are worth exploring. A third test, pausing brand ads, should follow the brand/non-brand split, but it isn't sized yet.
+
 **Now**
 
 1. Report Google employees and the key account as their own segments.
@@ -226,6 +247,12 @@ Fine for teaching; remove internal traffic before targeting.
 
 7. Retention: email and reminders for past visitors.
 8. A direct sales path for corporate (bulk) buyers.
+
+**What would change my mind:**
+- **Retargeting:** if the test's purchase lift sits clearly above break-even (its 95% CI above cost per retargeted visitor ÷ (USD 2.10 × 50% margin)), scale it; if clearly below, stop. In between, I extend the test once, up to 24 months.
+- **Display:** if held-out users make significantly fewer visits, Display adds traffic, and I'd value those visits against its cost. If the measured difference stays below the visits GA credits to Display, I'd budget it on that difference, not on GA's report.
+- **Organic Search:** if the store's own data showed that most direct returns start with a fresh Google search, the over-credit shrinks toward the 1.8 points on GA's own labels.
+- **Paid Search:** no rule yet. The brand-pause test needs sizing first.
 
 ## 7. What I learned
 
