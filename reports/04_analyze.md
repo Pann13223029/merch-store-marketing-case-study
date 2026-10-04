@@ -245,9 +245,7 @@ Two baselines need no model at all. The **funnel rule** ranks first visits by th
 | Two-line rule | +0.013 (−0.002 to +0.029): not significant | **+6.5 pts** (+2.7 to +10.7) |
 | Lab's features, refit | +0.007 (−0.007 to +0.021): not significant | +2.8 pts (−0.6 to +6.4): not significant |
 
-![Cumulative gains chart: the top 10% of first-time visitors holds 68% of later buyers for the model, 65% for the lab refit, 61% for the two-line rule and 54% for the funnel rule](figures/d2_gains_chart.png)
-
-The model clearly beats the funnel rule, so the Ask-phase criterion is met. **Against the two-line rule the edge is much smaller:** the rule's top 10% holds 61% of later buyers against the model's 68%. That gap is significant; the PR-AUC gain isn't. Against the lab's features refit on corrected data neither gain is significant (68% vs 65%). The three model families are tied on the test months, and the validation winner isn't the test winner: logistic regression has the highest PR-AUC and the forest reaches the most later buyers. That's what noise looks like when the real differences are small. **The large gain came from correcting the population and the label** (Part A and Process). The model mainly adds a sharper top of the ranking.
+The model clearly beats the funnel rule, so the Ask-phase criterion is met. **Against the two-line rule the edge is much smaller:** the rule's top 10% holds 61% of later buyers against the model's 68%. That gap is significant; the PR-AUC gain isn't. Against the lab's features refit on corrected data neither gain is significant (68% vs 65%). The three model families are tied on the test months, and the validation winner isn't the test winner: logistic regression has the highest PR-AUC and the forest reaches the most later buyers. That's what noise looks like when the real differences are small. **The large gain came from correcting the population and the label** (Part A and Process). The model mainly adds a sharper top of the ranking. The gains chart is in section 8, drawn on the visitors a live campaign would score.
 
 ### 4. Robustness
 
@@ -337,6 +335,8 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 | Two-line rule | 196 of 323 | 60.7% (55.3–65.9%) |
 | Difference, refit minus two-line rule (paired bootstrap) | | **+9.9 pts** (+4.5 to +15.0); PR-AUC +0.009 (−0.009 to +0.025), not significant |
 
+![Cumulative gains chart on the visitors a live campaign would score: the top 10% of first-time visitors holds 71% of real later buyers for the model, 61% for the two-line rule and 54% for the funnel rule](figures/d2_gains_chart.png)
+
 | Target (no hindsight), up to a month | Visitors/month | Later buyers reached: all / real | Staff share of buyers reached | As reported | **Staff at zero lift** (95% CI) | If staff were valued like customers |
 |---|---:|---|---:|---:|---|---:|
 | Top 1% | 451 | 26% / 25% | 21% | $275 | **$267** ($175–$379) | $351 |
@@ -345,7 +345,7 @@ The population above leaves out Google employees with a **whole-year** flag: a v
 | Top 20% | 9,019 | 86% / 84% | 23% | $918 | **$948** ($718–$1,199) | $1,312 |
 
 - **Staff are easy positives.** They buy within 30 days at 15.3% in the test months, against 0.35% for everyone else. Counted as buyers, they lift PR-AUC to 0.081 and top-10% recall to 73%, which flatters the model rather than showing a better ranking.
-- **The audience claim for real customers:** the refit model's top 10% holds **228 of 323 real later buyers, 71%** (65–75%), against **61%** for the two-line rule. The edge is about 10 points; the PR-AUC edge isn't significant.
+- **The audience claim for real customers:** the refit model's top 10% holds **228 of 323 real later buyers, 71%** (65–75%), against **61%** for the two-line rule and 54% for the funnel rule. The edge over the two-line rule is about 10 points; the PR-AUC edge isn't significant.
 - **Staff in the audience:** they're 3.7% of the top-10% audience but **23% of the later buyers it reaches** (70 of 298). Retargeting can't cause their purchases, so they count as reach, not value.
 - **The value moves little:** with staff at zero lift the top 10% is worth up to about $744 a month against $692 as reported, and the top 20% up to about $948 against $918. Valuing staff like customers would overstate the top 10% by 47% ($1,095).
 - **Seven** test visitors had an internal entry *before* their first visit, so a campaign could drop them at scoring time. Doing so changes nothing at this precision (PR-AUC 0.0806, 298 later buyers in the top 10%).

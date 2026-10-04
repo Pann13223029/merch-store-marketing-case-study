@@ -9,14 +9,14 @@ You asked where the store's next marketing dollar should go. My answer: not wher
 ## The bottom line
 
 1. **Don't move budget on GA's channel report.** It likely gives Organic Search up to about **15 points of purchases** it didn't earn. When visitors who first came from a campaign come back on their own, by bookmark or typed address, the report credits that campaign. Visitors returning on their own bring **34% of purchases** and 44% of revenue (with the largest purchases capped).
-2. **Keep Paid Search, but treat its value as a ceiling.** A click is credited with **$1.56–$2.43** of revenue, so at a 50% gross margin I'd bid at most **$0.78–$1.21**, and less if some buyers would have come anyway. Every purchase with a readable keyword was on a brand keyword (the store's or Google's name).
+2. **Keep Paid Search, but treat its value as a ceiling, and test pausing brand ads.** A click is credited with **$1.56–$2.43** of revenue, so at a 50% gross margin I'd bid at most **$0.78–$1.21**, and less if some buyers would have come anyway. Every purchase with a readable keyword was on a brand keyword (the store's or Google's name).
 3. **Display's reported revenue was mostly one existing corporate buyer.** Without it, a Display click is credited with **$2.84–$3.87** under every attribution rule. **Hold its budget and test what it adds.**
 4. **Keep retargeting small and narrow.** The model's top 10% of first-time visitors includes **71% of the outside customers who come back to buy within 30 days** (a simple two-line rule gets 61%), but retargeting them is worth only up to about **$690–$745 a month** in extra gross profit, if the ads reach everyone in the audience (before ad costs).
 
 ## Two things to know about the data
 
 - **About 41% of the store's revenue comes from Google's own employees, not from marketing.** They arrive through Google's internal store link, so I report them as their own segment, and every marketing figure here leaves them out. The public data hides that link, but Google's own training copy shows it, which let me confirm the employee filter (99% precision).
-- **One corporate buyer, which I call the key account, is reported on its own, too.** A single outside visitor, 278 visits from one office desktop, made 16 purchase sessions worth **$128,413**: 15% of outside revenue in the period and half of all bulk revenue. It was already buying before its only Display click, and GA's campaign carry-over then labeled its next 15 purchases Display. Its orders reflect an existing relationship, not a channel.
+- **One corporate buyer, which I call the key account, is reported on its own, too.** A single outside visitor, with 278 visits on weekdays in office hours, made 16 purchase sessions worth **$128,413**: 15% of outside revenue in the period and half of all bulk revenue. It was already buying before its only Display click, and GA's campaign carry-over then labeled its next 15 purchases Display. Its orders reflect an existing relationship, not a channel.
 
 ## What I'd do
 
@@ -39,6 +39,15 @@ For retargeting, include a score band only if reaching one of its visitors costs
 2. **Run a 12-month 50/50 retargeting test of the top 20%.** About 9,000 top-scored first-time visitors a month would be split between retargeted and held out. The test detects a purchase lift of about 14% or more (a 10% lift has a 52% chance of being detected within a year; about 23 months gives 80%), and return visits give an early read about 2.5 months after launch (about 1.5 months of enrollment plus the 30-day follow-up). Holding out only 10% would give just a 23% chance of detecting a 10% lift within a year.
 3. **Hold Display's budget and test it on site visits for 12 weeks.** A test on purchases can't work: Display is credited with about 2 purchases a week, too few to detect an effect even if the ads caused every one. Split Display's own audience lists, not all site traffic: across the whole site the visit test has only 17–30% power. It reaches 80% only if the randomized audience (both arms together) makes at most about 500–1,000 visits a week and the ads cause nearly all the visits GA credits to Display.
 4. **Split brand from non-brand search, and test pausing brand ads (not yet sized).** Purchases on brand keywords are the ones most likely to happen without the ad.
+
+## What would change my mind
+
+- **Retargeting:** if the test's purchase lift sits clearly above break-even (its 95% CI above cost per retargeted visitor ÷ ($2.10 × 50% margin)), scale it; if clearly below, stop. In between, I extend the test once, up to 24 months.
+- **Display:** if held-out users make significantly fewer visits, Display adds traffic, and I'd value those visits against its cost. If the measured difference stays below the visits GA credits to Display, I'd budget it on that difference, not on GA's report.
+- **Organic Search:** if your data showed that most direct returns start with a fresh Google search, the over-credit shrinks toward the 1.8 points on GA's own labels.
+- **Paid Search:** no rule yet. The brand-pause test needs sizing first.
+
+**What I'd ask you for first:** ad costs (cost per click by campaign and keyword, Display and retargeting spend), the ad account's brand and non-brand campaigns, and the size of Display's audience lists, which decides whether its test has enough power.
 
 ## How sure I am
 

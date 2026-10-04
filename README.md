@@ -10,9 +10,7 @@ That was the first surprise in a year of the store's analytics (Aug 2016 – Aug
 
 ## Why I did this
 
-I start with the business problem, then solve it with whatever fits: product, data or AI. I was one of five co-founders of OpenMirai, an EdTech company, where I led strategy (2021–2025). I worked as a business analyst intern at Opendream, and I'm finishing my degree at Ritsumeikan Asia Pacific University in Japan (March 2027).
-
-In summer 2025 I was vice leader of a student shaved-ice stand at two festivals in Beppu. On night one we logged all 450 cups by hand, with each flavor and our best guess at each customer's age and group, and used the tally to rework the menu for night two. This project asks the same question at Google's scale: who is actually buying, and what should change?
+I start with the business problem, then solve it with whatever fits: product, data or AI. In summer 2025 I was vice leader of a student shaved-ice stand at two festivals in Beppu. On night one we logged all 450 cups by hand, with each flavor and our best guess at each customer's age and group, and used the tally to rework the menu for night two. This project asks the same question at Google's scale: who is actually buying, and what should change?
 
 It's also my capstone for the Google Data Analytics certificate, with a twist. Most projects on this dataset ask "will this visitor buy?". I asked the question the store's Head of Marketing has to answer instead, and I checked the Google lab that asks the first one.
 
@@ -20,7 +18,7 @@ It's also my capstone for the Google Data Analytics certificate, with a twist. M
 
 | The Head of Marketing asks | My answer | How sure |
 |---|---|---|
-| **Which channels deserve the budget?** | Don't move money on GA's channel report: it likely gives Organic Search up to about 15 percentage points of purchase credit that belongs to visitors who came back on their own. Keep Paid Search, but bid below what a click can be worth ($0.78–$1.21 at most). Hold Display's budget until a test shows what it adds. | **Moderate** on Organic Search: the direction holds under every reading, but the size rests on an assumption. **Low** on what Paid Search and Display cause, which only a test can show |
+| **Which channels deserve the budget?** | Don't move money on GA's channel report: it likely gives Organic Search up to about 15 percentage points of purchase credit that belongs to visitors who came back on their own. Keep Paid Search, split brand from non-brand search, bid below what a click can be worth ($0.78–$1.21 at most), and test pausing brand ads. Hold Display's budget until a test shows what it adds. | **Moderate** on Organic Search: the direction holds under every reading, but the size rests on an assumption. **Low** on what Paid Search and Display cause, which only a test can show |
 | **Which first-time visitors are worth bringing back?** | Only the top-scored ones. A model's top 10% holds 71% of later buyers, but retargeting them is worth only up to about $690–$745 a month before ad costs, if the ads reach everyone in the audience. Measure the real lift with a 50/50 test. | **High** for the ranking. **Low** for the lift, which is borrowed from other companies' experiments on people who saw an ad |
 
 There's no "move X% of budget to channel Y" here, on purpose. The data has no ad costs, and getting credit for a sale isn't the same as causing it, so moving money by credit could fund channels that didn't cause the sales. I sized the tests that would measure it instead ([notebook 06](notebooks/06_test_design.ipynb)).
@@ -69,7 +67,7 @@ When someone comes back by bookmark or by typing the address, GA's default repor
 
 </details>
 
-### 4. One office desktop made Display look like a winner
+### 4. One corporate buyer made Display look like a winner
 
 It visited the store 278 times, on weekdays during office hours. It had already placed a $17,860 order before it clicked a Display ad, once. GA remembers campaigns, so it labeled the account's next 15 purchases "Display": $110,553 from a customer who was already buying. That one account is 89% of everything GA credits to Display. I report it on its own, like employees. Without it, a Display click is credited with $2.84–$3.87 under every rule, and only a test can show what Display really adds.
 
@@ -97,18 +95,16 @@ Every attribution rule I tested credits a Paid Search click with $1.56–$2.43 o
 
 ### 6. A model can find tomorrow's buyers, but they're worth less than you'd hope
 
-Scored at their first visit, the top 10% of first-time visitors held 71% of the outside customers who bought within the next 30 days. A two-line rule (North American visitors first, then how far they got toward checkout) reached 61%, so the model's edge is real but modest. And the money is small: retargeting the top 10% is worth up to about $690–$745 a month in extra gross profit, if the ads reach everyone in the audience (before ad costs).
+Scored at their first visit, the top 10% of first-time visitors held 71% of the outside customers who bought within the next 30 days. A two-line rule (North American visitors first, then how far they got toward checkout) reached 61%, so the model's edge is real but modest: about 10 points more of later buyers in its top 10% (95% CI 4.5–15). And the money is small: retargeting the top 10% is worth up to about $690–$745 a month in extra gross profit, if the ads reach everyone in the audience (before ad costs).
 
-![Cumulative gains chart: the top 10% of first-time visitors holds 68% of later buyers for the model, 65% for the lab's features refit, 61% for the two-line rule and 54% for the funnel rule](reports/figures/d2_gains_chart.png)
-
-*The chart shows the population as first reported (68% vs 61%). Refit and scored without hindsight about who is an employee, the model reaches 71% of real later buyers.*
+![Cumulative gains chart on the visitors a live campaign would score: the top 10% of first-time visitors holds 71% of real later buyers for the model, 61% for the two-line rule and 54% for the funnel rule](reports/figures/d2_gains_chart.png)
 
 <details>
 <summary>The numbers</summary>
 
 - 71% has a 95% CI of 65–75%. It comes from the model refit on the table a live campaign could build, so Google staff whom only a later visit reveals stay in training (21% of its later buyers). Trained without them, as first reported, the model reaches 68% (219 of 323) of the same buyers. It uses a 30-day window and was tested on later first visits (May 1 – Jul 1, 2017) never used in training or tuning.
 - Nearly 1 in 4 of the later buyers the top 10% reaches are Google employees whom only a later visit reveals, so they count as reach, not value.
-- The top 20% is worth up to about $920–$950 a month. On real later buyers, PR-AUC is 0.058, against 0.048 for the two-line rule, an edge that isn't significant (as first reported: 0.062, against 0.028 for a funnel rule and 0.049 for the two-line rule).
+- The top 20% is worth up to about $920–$950 a month. On real later buyers, PR-AUC is 0.058, against 0.048 for the two-line rule; unlike the top-10% edge, this PR-AUC edge isn't significant (as first reported: 0.062, against 0.028 for a funnel rule and 0.049 for the two-line rule).
 
 </details>
 
@@ -127,14 +123,28 @@ Four things can start now, two need a test first, and two are worth exploring. A
 | Explore | Retention: email and reminders for past visitors | Head of Marketing | 34% of purchases |
 | Explore | A direct sales path for corporate (bulk) buyers | Head of Marketing, Sales | $248,552 of bulk purchase sessions, half of it one account |
 
+**What would change my mind:**
+- **Retargeting:** if the test's purchase lift sits clearly above break-even (its 95% CI above cost per retargeted visitor ÷ ($2.10 × 50% margin)), scale it; if clearly below, stop. In between, I extend the test once, up to 24 months.
+- **Display:** if held-out users make significantly fewer visits, Display adds traffic, and I'd value those visits against its cost. If the measured difference stays below the visits GA credits to Display, I'd budget it on that difference, not on GA's report.
+- **Organic Search:** if the store's own data showed that most direct returns start with a fresh Google search, the over-credit shrinks toward the 1.8 points on GA's own labels.
+- **Paid Search:** no rule yet. The brand-pause test needs sizing first.
+
+**What I'd ask the store for first:** ad costs (cost per click by campaign and keyword, Display and retargeting spend), the ad account's brand and non-brand campaigns, and the size of Display's audience lists, which decides whether its test has enough power.
+
 ## Where I got it wrong
 
 Some mistakes I caught along the way. Each one is recorded in the decision logs:
 - **I assumed Google's lab used the public dataset.** It uses a fuller table, so I redid the audit on the lab's own data, which turned an estimate of the employee share (53%) into a verified figure (61%).
-- **An ID that looked unique wasn't.** The lab's `unique_session_id` repeats for visits split at midnight, and joining on it duplicated 1,666 rows. The join now uses a fingerprint of all grouping columns.
 - **A memoryless model over-credited Social.** A first-order Markov chain gave Social nearly 3× the purchases in journeys it started (163 vs 59). A third-order chain fixed most of it, and Social and Affiliates stay out of the headlines.
-- **A revenue-splitting method I rejected** gave Paid Search less credit than last click. I replaced it with a value-weighted removal effect.
 - **A two-day overlap flipped my model choice.** One tuning fold left only February, 28 days, between training and validation, but each label looks 30 days ahead, so labels from Jan 30–31 could see into the validation months. Fixing it moved gradient boosting just past the random forest (0.0705 vs 0.0700). My rule, set before testing, takes the higher score, so I switched, even though the headline dipped from 72% to 71%.
+
+<details>
+<summary>Smaller fixes</summary>
+
+- **An ID that looked unique wasn't.** The lab's `unique_session_id` repeats for visits split at midnight, and joining on it duplicated 1,666 rows. The join now uses a fingerprint of all grouping columns.
+- **A revenue-splitting method I rejected** gave Paid Search less credit than last click. I replaced it with a value-weighted removal effect.
+
+</details>
 
 Then, before calling it done, I put the whole analysis through an AI-assisted red-team review: re-derive every headline from the data and hunt for claims the evidence doesn't support. It changed six conclusions:
 - **Display** was mostly one corporate buyer, so it's now reported on its own as the key account.
@@ -159,6 +169,21 @@ A second red-team review, after I published the project, caught one more:
 ## How I did it, for technical reviewers
 
 D1 is the channel-budget decision and D2 the retargeting decision; H1–H4 are the hypotheses set in the Ask phase.
+
+```mermaid
+flowchart TB
+    ask["<b>Ask</b><br/>two budget decisions<br/>4 hypotheses"] --> prep["<b>Prepare</b><br/>employees hidden as Referral<br/>one key account"]
+    prep --> proc["<b>Process</b><br/>one clean session table<br/>15 validation checks"]
+    proc --> labA["<b>A. Lab audit</b><br/>98.8% of its top 1% are staff"]
+    proc --> modB["<b>B. Retargeting model</b><br/>top 10% holds 71% of later buyers"]
+    proc --> attC["<b>C. Attribution</b><br/>Organic Search over-credited<br/>by up to about 15 points"]
+    labA --> rt["<b>Red-team review</b><br/>changed 6 conclusions"]
+    modB --> rt
+    attC --> rt
+    rt --> testD["<b>D. Test design</b><br/>two holdout tests sized"]
+    testD --> share["<b>Share</b><br/>memo, deck, Kaggle notebook"]
+    share --> rt2["<b>Second review</b><br/>one more fix: the day count"]
+```
 
 ### Ask ([reports/01_ask.md](reports/01_ask.md))
 The business task, stakeholders, 8 guiding questions, 4 hypotheses with pre-specified tests, and success criteria. The public dataset is heavily used, and Google's own lab already asks "will this visitor buy?", so the project is framed around **budget decisions** and around **auditing** that lab rather than repeating it.
