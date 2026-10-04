@@ -229,7 +229,7 @@ gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 Then run `notebooks/01` → `06` in order.
 - **Downloads:** a first run queries BigQuery in notebooks 01–05 (about 2.2 GB scanned and 20 minutes in all, 8 of them for notebook 02's clean session table). Later runs read the local cache in `data/` (gitignored).
 - **Committed results:** the BigQuery ML results (`data/raw/a11_*`, `a13_*`) and the tuning results (`data/processed/tuning_results.json`) are in the repository, so `RUN_BQML` (notebook 03) and `RUN_TUNING` (notebook 04) stay `False` by default. Set one to `True` to recompute: about 7 minutes for the BigQuery ML models, about 35 minutes for the tuning.
-- **Run time** with `data/` filled: about 20–35 minutes in all, depending on what else the machine is doing. 01, 02 and 06 take under a minute each, 03 about 4–8 minutes (almost all of it paired bootstraps), 04 about 12–22 minutes and 05 about 5–8 minutes.
+- **Run time** with `data/` filled: about 20–35 minutes in all, depending on what else the machine is doing. 01, 02 and 06 take under a minute each, 03 about 4–8 minutes (almost all of it paired bootstraps), 04 about 12–22 minutes and 05 about 5–8 minutes. Re-running 04 takes under a minute: with `RUN_SLOW = False` (the default) it reuses the cached results of its slow steps (model refits, cross-validation, bootstraps) while their inputs are unchanged; set it to `True` to recompute them.
 - **Cost:** every query stays well inside BigQuery's free tier. The query helper ([src/bq.py](src/bq.py)) dry-runs each query first, refuses anything scanning more than 20 GB, and caps each job's billed bytes at the same 20 GB. The BigQuery ML model-creation statements skip the dry run, which doesn't reliably estimate their cost, and run under that cap alone; they scan under 0.3 GB each.
 
 **Tests:** the suite needs no BigQuery access. It checks the calculation logic on synthetic data, the lab-audit gap on the committed BigQuery ML scores, and that the Kaggle notebook matches its build script; checks on the real journey table run only when `data/` is cached. CI runs it on every push.
@@ -243,7 +243,7 @@ Then run `notebooks/01` → `06` in order.
 ├── reports/     executive summary, slide deck, phase write-ups (01_ask … 04_analyze), figures/
 ├── notebooks/   01_prepare … 06_test_design
 ├── sql/         prepare/ · process/ · audit/ (incl. the lab's BigQuery ML models)
-├── src/         bq · validate · tables · segments · journeys · lab_audit · modeling · breakeven · attribution · power · viz · dashboard
+├── src/         bq · validate · tables · segments · journeys · lab_audit · modeling · breakeven · attribution · power · viz · dashboard · cache
 ├── tests/       pytest suite: calculation logic (synthetic data), plus real-data checks on attribution and the lab audit
 ├── dashboard/   Looker Studio build guide and its CSV data (python -m src.dashboard)
 ├── kaggle/      self-contained Kaggle notebook
