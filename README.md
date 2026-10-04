@@ -10,9 +10,9 @@ That was the first surprise in a year of the store's analytics (Aug 2016 – Aug
 
 ## Why I did this
 
-I start with the business problem, then solve it with whatever fits: product, data or AI. In summer 2025 I was vice leader of a student shaved-ice stand at two festivals in Beppu. On night one we logged all 450 cups by hand, with each flavor and our best guess at each customer's age and group, and used the tally to rework the menu for night two. This project asks the same question at Google's scale: who is actually buying, and what should change?
+This is my capstone for the Google Data Analytics certificate, and I didn't want to repeat the usual project. Most work on this dataset asks "will this visitor buy?", and Google's own BigQuery ML lab already asks it. A marketing lead has harder questions: where should the next budget go, and which visitors are worth paying to bring back? I built the project around those two decisions, and audited Google's lab on the way.
 
-It's also my capstone for the Google Data Analytics certificate, with a twist. Most projects on this dataset ask "will this visitor buy?". I asked the question the store's Head of Marketing has to answer instead, and I checked the Google lab that asks the first one.
+The habit comes from a shaved-ice stand. In summer 2025 I was vice leader of a student team selling at two festivals in Beppu, Japan. On night one we tallied all 450 cups by hand, by flavor, age group and group type, and used the tally to plan night two. Here I ask the same question at Google's scale: who is actually buying, and what should change?
 
 ## The short answer
 
